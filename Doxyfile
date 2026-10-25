@@ -1,0 +1,24 @@
+# @file
+# @brief Generate an English HTML reference for the portable API and native adapters.
+PROJECT_NAME           = DiskSan
+OUTPUT_DIRECTORY       = build-api
+OUTPUT_LANGUAGE        = English
+INPUT                  = include src tests tools docs README.md CONTRIBUTING.md CHANGELOG.md
+FILE_PATTERNS          = *.h *.c *.py *.md
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE  = README.md
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+PREDEFINED            = __linux__=1 _WIN32=1
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_AS_ERROR          = YES

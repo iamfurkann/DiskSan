@@ -1,0 +1,9 @@
+/**
+ * @file
+ * @brief Generate the application version from the CMake project version.
+ */
+#ifndef DISKSAN_VERSION_H
+#define DISKSAN_VERSION_H
+/** @brief Version string configured from the single CMake version source. */
+#define DISKSAN_VERSION "@PROJECT_VERSION@"
+#endif

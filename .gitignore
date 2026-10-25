@@ -1,3 +1,11 @@
+/build*/
+/dist/
+/.local-evidence/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Preserve the repository's original CMake ignore rules.
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
