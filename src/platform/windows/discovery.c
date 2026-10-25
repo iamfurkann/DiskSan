@@ -3,6 +3,7 @@
  * @brief Discover disk interfaces through SetupAPI and read-only Windows storage queries.
  */
 #include "disksan/discovery.h"
+#include "metadata.h"
 #include <windows.h>
 #include <setupapi.h>
 #include <winioctl.h>
@@ -38,7 +39,7 @@ static int query_warning(ds_device *d, DWORD error)
 static int descriptor_text(ds_device *d, ds_text *field, const BYTE *buffer, size_t length, DWORD offset, const char *source)
 {
     if (!offset) return 0;
-    if ((size_t)offset >= length || !memchr(buffer + offset, '\0', length - offset))
+    if (!ds_windows_string_valid(buffer, length, offsetof(STORAGE_DEVICE_DESCRIPTOR, RawDeviceProperties), offset))
         return ds_warn(d, "invalid_native_metadata");
     return ds_text_offer(d, field, (const char *)(buffer + offset), source);
 }
@@ -53,7 +54,7 @@ static int properties(ds_device *d, HANDLE handle, ds_facts *facts)
     DWORD returned = 0;
     if (!DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &header, sizeof(header), &returned, NULL))
         return query_warning(d, GetLastError());
-    if (returned < sizeof(header) || header.Size < sizeof(STORAGE_DEVICE_DESCRIPTOR) || header.Size > DS_NATIVE_LIMIT)
+    if (returned != sizeof(header) || header.Size < sizeof(STORAGE_DEVICE_DESCRIPTOR) || header.Size > DS_NATIVE_LIMIT)
         return ds_warn(d, "invalid_native_metadata");
     BYTE *buffer = calloc(1, header.Size);
     if (!buffer) return -1;
@@ -64,7 +65,7 @@ static int properties(ds_device *d, HANDLE handle, ds_facts *facts)
         return query_warning(d, saved);
     }
     STORAGE_DEVICE_DESCRIPTOR *descriptor = (STORAGE_DEVICE_DESCRIPTOR *)(void *)buffer;
-    if (returned < sizeof(*descriptor) || returned > header.Size || descriptor->Size > returned || descriptor->Size < sizeof(*descriptor)) {
+    if (returned < sizeof(*descriptor) || !ds_windows_descriptor_valid(header.Size, returned, descriptor->Size, sizeof(*descriptor))) {
         free(buffer);
         return ds_warn(d, "invalid_native_metadata");
     }
@@ -122,8 +123,12 @@ static int collect(const wchar_t *interface_path, bool partition, ds_device *d)
 #define TRY(expr) do { if ((expr) < 0) { rc = -1; goto done; } } while (0)
     STORAGE_DEVICE_NUMBER identity = {0};
     DWORD returned = 0;
-    bool has_identity = DeviceIoControl(handle, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &identity, sizeof(identity), &returned, NULL) && returned >= sizeof(identity);
+    bool has_identity = DeviceIoControl(handle, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &identity, sizeof(identity), &returned, NULL) && returned == sizeof(identity);
     if (has_identity) {
+        bool correct_kind = identity.DeviceType == FILE_DEVICE_DISK &&
+                            (partition ? identity.PartitionNumber != 0U && identity.PartitionNumber != MAXDWORD :
+                                         identity.PartitionNumber == 0U || identity.PartitionNumber == MAXDWORD);
+        if (!correct_kind) { rc = 1; goto done; }
         char canonical[80];
         (void)snprintf(canonical, sizeof(canonical), "\\\\.\\PhysicalDrive%lu", (unsigned long)identity.DeviceNumber);
         if (partition) TRY(ds_text_offer(d, &d->parent, canonical, "windows:DeviceNumber"));
@@ -135,14 +140,14 @@ static int collect(const wchar_t *interface_path, bool partition, ds_device *d)
     TRY(properties(d, handle, &facts));
     GET_LENGTH_INFORMATION length = {0};
     if (DeviceIoControl(handle, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &length, sizeof(length), &returned, NULL) &&
-        returned >= sizeof(length) && length.Length.QuadPart >= 0)
+        returned == sizeof(length) && length.Length.QuadPart >= 0)
         TRY(ds_number_offer(d, &d->size_bytes, (uint64_t)length.Length.QuadPart, "windows:IOCTL_DISK_GET_LENGTH_INFO"));
     else TRY(ds_warn(d, "capacity_unavailable"));
     STORAGE_PROPERTY_QUERY query = {0};
     query.PropertyId = StorageAccessAlignmentProperty;
     query.QueryType = PropertyStandardQuery;
     STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR alignment = {0};
-    if (DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &alignment, sizeof(alignment), &returned, NULL) && returned >= sizeof(alignment)) {
+    if (DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &alignment, sizeof(alignment), &returned, NULL) && returned == sizeof(alignment) && alignment.Size >= sizeof(alignment) && alignment.Size <= returned) {
         if (alignment.BytesPerLogicalSector) TRY(ds_number_offer(d, &d->logical_sector_size, alignment.BytesPerLogicalSector, "windows:BytesPerLogicalSector"));
         if (alignment.BytesPerPhysicalSector) TRY(ds_number_offer(d, &d->physical_sector_size, alignment.BytesPerPhysicalSector, "windows:BytesPerPhysicalSector"));
     }
@@ -161,7 +166,7 @@ static int collect(const wchar_t *interface_path, bool partition, ds_device *d)
     if (has_identity) {
         STORAGE_DEVICE_NUMBER after = {0};
         if (!DeviceIoControl(handle, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &after, sizeof(after), &returned, NULL) ||
-            returned < sizeof(after) || after.DeviceType != identity.DeviceType || after.DeviceNumber != identity.DeviceNumber || after.PartitionNumber != identity.PartitionNumber)
+            returned != sizeof(after) || after.DeviceType != identity.DeviceType || after.DeviceNumber != identity.DeviceNumber || after.PartitionNumber != identity.PartitionNumber)
             rc = 1;
     }
 done:
@@ -195,7 +200,13 @@ int ds_discover(ds_inventory *inventory, const char *selector, char *error, size
                 break;
             }
             DWORD needed = 0;
-            (void)SetupDiGetDeviceInterfaceDetailW(set, &data, NULL, 0, &needed, NULL);
+            BOOL probed = SetupDiGetDeviceInterfaceDetailW(set, &data, NULL, 0, &needed, NULL);
+            DWORD detail_error = GetLastError();
+            if (probed || detail_error != ERROR_INSUFFICIENT_BUFFER) {
+                if (detail_error == ERROR_NOT_ENOUGH_MEMORY || detail_error == ERROR_OUTOFMEMORY) { rc = 1; break; }
+                if (ds_strings_add(&inventory->warnings, "device_record_unavailable_or_changed") < 0) { rc = 1; break; }
+                continue;
+            }
             if (needed < sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) || needed > DS_NATIVE_LIMIT) { rc = 1; break; }
             SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = calloc(1, needed);
             if (!detail) { rc = 1; break; }
@@ -205,6 +216,14 @@ int ds_discover(ds_inventory *inventory, const char *selector, char *error, size
                 if (ds_strings_add(&inventory->warnings, "device_record_unavailable_or_changed") < 0) { rc = 1; break; }
                 continue;
             }
+            size_t units = (needed - offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath)) / sizeof(WCHAR);
+            enum ds_wide_status wide_status = ds_windows_wide_status(detail->DevicePath, units);
+            if (wide_status != DS_WIDE_OK) {
+                free(detail);
+                const char *warning = wide_status == DS_WIDE_TOO_LONG ? "native_path_too_long" : "invalid_native_path";
+                if (ds_strings_add(&inventory->warnings, warning) < 0) { rc = 1; break; }
+                continue;
+            }
             ds_device d;
             ds_device_init(&d);
             int result = collect(detail->DevicePath, type == 1U, &d);
@@ -212,12 +231,12 @@ int ds_discover(ds_inventory *inventory, const char *selector, char *error, size
             if (result == 1) result = ds_strings_add(&inventory->warnings, "device_record_unavailable_or_changed");
             else if (result == 0 && selected(&d, selector)) result = ds_inventory_add(inventory, &d);
             ds_device_free(&d);
-            if (result < 0) { rc = 1; break; }
+            if (result < 0) { rc = result == -2 ? (selector ? 3 : 1) : 1; (void)snprintf(error, size, "%s", result == -2 ? "Ambiguous device identity; retry." : "Memory allocation failed."); break; }
         }
         SetupDiDestroyDeviceInfoList(set);
-        if (rc) { (void)snprintf(error, size, "Windows device enumeration failed or allocation was unavailable."); return rc; }
+        if (rc) { if (!error[0]) (void)snprintf(error, size, "Windows device enumeration failed or allocation was unavailable."); return rc; }
     }
-    if (selector && !inventory->count) { (void)snprintf(error, size, "Target is not a present disk/partition device interface."); return 3; }
+    if (selector && inventory->count != 1U) { (void)snprintf(error, size, "Target is not a present disk/partition device interface."); return 3; }
     if (!inventory->count && inventory->warnings.count) { (void)snprintf(error, size, "All device records became unavailable."); return 1; }
     return 0;
 }

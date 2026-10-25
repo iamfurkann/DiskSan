@@ -20,7 +20,7 @@ def source_paths(root):
     """! @brief Discover maintained text files without traversing generated or private directories."""
     paths = set(root.glob("*.md"))
     paths.update(root / name for name in (".gitignore", "CMakeLists.txt", "Doxyfile", "LICENSE"))
-    for directory in ("src", "include", "tests", "tools", "cmake", "docs"):
+    for directory in ("src", "include", "tests", "tools", "cmake", "docs", ".github"):
         for path in (root / directory).rglob("*"):
             if path.is_file() and "__pycache__" not in path.parts and path.name != ".DS_Store":
                 paths.add(path)
@@ -117,7 +117,7 @@ def main():
             found, count = check_python(name, text)
             errors.extend(found)
             python_count += count
-        elif name in ("CMakeLists.txt", "Doxyfile") or path.suffix == ".cmake":
+        elif name in ("CMakeLists.txt", "Doxyfile") or path.suffix in (".cmake", ".yml", ".yaml"):
             header = "\n".join(text.splitlines()[:4])
             if "@file" not in header or not BRIEF.search(header):
                 errors.append(f"{name}: missing configuration @file/@brief")

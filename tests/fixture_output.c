@@ -47,6 +47,10 @@ int main(int argc, char **argv)
         } else if (strcmp(mode, "unknown") != 0) {
             MUST(ds_number_offer(&d, &d.size_bytes, UINT64_MAX, "fixture"));
         }
+        if (strcmp(mode, "conflict") == 0) {
+            MUST(ds_number_offer(&d, &d.size_bytes, 4096, "alternative"));
+            MUST(ds_text_offer(&d, &d.model, "alternative model", "alternative"));
+        }
         MUST(ds_classify(&d, &facts));
         MUST(ds_inventory_add(&inventory, &d));
     }

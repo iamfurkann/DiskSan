@@ -1,5 +1,7 @@
 # DiskSan 0.1.0 validation report
 
+This historical report is preserved. See [0.1.1 validation](WORK_REPORT_0.1.1.md) for the next change set.
+
 ## 1. Environment and initial state
 
 The project started in an empty, dedicated workspace without Git history or a build system. Only DiskSan files were changed. Linux validation used a newly created, isolated VM workspace with separate source, dependencies, tools, temporary files, builds, and evidence directories. No unrelated project was modified.

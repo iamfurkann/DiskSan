@@ -26,3 +26,9 @@ Use ASan/UBSan for changes affecting memory ownership, parsing, or native discov
 Explain the observable behavior, why the change is needed, and what was verified. Preserve unknown/null values and evidence warnings. Do not deduplicate by serial number, infer physical media from a brand name, or treat a snapshot as erase authorization. Keep native APIs inside their adapters and maintain the read-only query allowlists.
 
 Use focused commits and avoid unrelated refactoring. Preserve the repository's existing [Apache License 2.0](LICENSE) and attribution notices. Tagged releases and signed binary publication are separate from ordinary source contributions.
+
+## CI and release preparation
+
+The [workflow](.github/workflows/ci.yml) runs on pushes and pull requests with `contents: read`, no persisted checkout credentials, and no secret-dependent steps. Native tests perform metadata queries only. Run `ctest -L portable`, `ctest -L fault`, `ctest -L integration`, and `ctest -L packaging` to inspect the separate gates. Do not hide failures with blanket skips or `continue-on-error`.
+
+A local workflow file or successful MinGW cross-build does not prove hosted/native Windows success. Record observed test counts, skips, compiler, and build mode. Follow [security reporting](SECURITY.md) for sensitive issues. The maintainer reviews, commits, pushes, tags, and publishes releases as separate actions; preparation scripts do not perform Git mutations or publication.

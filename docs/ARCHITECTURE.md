@@ -19,9 +19,9 @@ Production discovery does not shell out to diskutil or lsblk. Those tools are re
 
 ## Ownership and errors
 
-Each record owns its text and string lists. Evidence and classification labels are borrowed strings with record lifetime. Adding a record to an inventory transfers ownership only on success; duplicate records are consumed and released. Callers clean up partial records on every failure path. Public headers describe these contracts.
+Each record owns its text and string lists. Evidence and classification labels are borrowed strings with record lifetime. Adding a record to an inventory transfers ownership only on success; matching duplicate records are combined in a temporary deep copy before either input is released. A failed merge leaves both inputs intact. Callers clean up partial records on every failure path. Public headers describe these contracts.
 
-Missing metadata remains null with warnings. Total discovery failure is not reported as a successful empty snapshot. Source conflicts preserve the first valid value and add a warning. Serial numbers are not deduplication keys: native identity or a valid same-platform Unix device number is required.
+Missing metadata remains null with warnings. Total discovery failure is not reported as a successful empty snapshot. Source conflicts preserve the first valid value and add a warning. Serial numbers are not deduplication keys: matching native identity, platform, role, and consistent known Unix numbers are required. A shared number/path with conflicting or missing native identity returns an explicit ambiguity error.
 
 Linux rechecks sysfs dev/diskseq and opened descriptor identity. macOS rechecks registry identity and selector stat information. Windows rechecks the storage device number on the opened handle. These checks do not provide an atomic hotplug snapshot or authorization to erase a device.
 
@@ -33,7 +33,7 @@ macOS reads registry and Disk Arbitration descriptions without opening device da
 
 ## Extension boundary
 
-Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Version 0.1.0 intentionally contains no erase backend.
+Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Version 0.1.1 intentionally contains no erase backend.
 
 ## Primary references
 
@@ -43,3 +43,13 @@ Future sanitization needs separate protocol, permission, target-revalidation, po
 - [Windows storage property queries](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-ioctl_storage_query_property)
 - [Windows storage descriptor layout](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-storage_device_descriptor)
 - [Windows writability status query](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-ioctl_disk_is_writable)
+
+## Reconciliation and partial snapshots
+
+`ds_inventory_add` returns 0 after insertion/merge, -1 on allocation failure, or -2 for ambiguous identity. Linux/macOS/Windows adapters convert ambiguity into a diagnostic and nonzero scan status (invalid target where applicable). No successful empty JSON is emitted for total failure. Same serial/controller with different native IDs does not merge namespaces or devices. Missing Unix numbers on Windows are never treated as 0:0 evidence. One missing number can be enriched only when the native ID and role agree, with `identity_partially_verified`.
+
+The first normalized, validated field remains primary according to adapter source order. Additional sources/values enter a bounded evidence array; contradictory values add `metadata_conflict`. Alias paths are preserved as observed paths, not permanent identities. Duplicate classification disagreement reduces transport/protocol/media to unknown and warns. Role disagreement rejects the merge. This conservative policy may fail a multipath scan rather than present a false unique target.
+
+Linux collection is separated from enumeration in `device_info.c` with a narrow private seam for deterministic fixtures. `diskseq` is checked before/after collection and included in identity when valid. Without it, syspath/dev_t reuse is not fully detectable and `identity_generation_unavailable` remains visible. A probe that observes replacement/disappearance is dropped, with a scan warning; permission denial preserves valid sysfs evidence. macOS registry references and Windows handles retain their native cleanup paths; comprehensive native API allocation/handle injection remains open.
+
+Windows metadata helpers validate buffer bounds independently of Windows headers. SetupAPI detail paths require a bounded terminator and valid surrogate pairs before conversion, while allocation failure remains fatal. Storage-number type/partition fields are checked before creating a PhysicalDrive alias. Queries remain the existing read-only allowlist. See Microsoft's [interface-detail contract](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw) and [storage device numbers](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-storage_device_number).

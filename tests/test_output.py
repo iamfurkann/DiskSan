@@ -2,6 +2,7 @@
 @brief Test portable output contracts using synthetic records only.
 """
 import json
+from pathlib import Path
 import subprocess
 import sys
 import unittest
@@ -21,6 +22,15 @@ class OutputContract(unittest.TestCase):
     def device(self, mode="hostile"):
         """! @brief Decode the first synthetic device record for focused field assertions."""
         return json.loads(run(mode))["devices"][0]
+
+    def test_schema2_golden_compatibility(self):
+        """! @brief Preserve every field of the v0.1.0 schema fixture while allowing additive evidence."""
+        expected = json.loads((Path(__file__).parent / "fixtures/schema2-unknown.json").read_text())
+        actual = json.loads(run("unknown"))
+        actual["version"] = "<version>"
+        for device in actual["devices"]:
+            device.pop("evidence")
+        self.assertEqual(actual, expected)
 
     def test_envelope(self):
         """! @brief Verify the schema version, application identity, snapshot mode, and record counts."""
@@ -105,6 +115,17 @@ class OutputContract(unittest.TestCase):
         self.assertIn("18446744073709551615", value)
         self.assertNotIn("\x1b", value)
 
+    def test_supplemental_evidence(self):
+        """! @brief Keep schema 2 primary fields while exposing bounded alternative provenance."""
+        data = json.loads(run("conflict"))
+        d = data["devices"][0]
+        self.assertEqual(data["schema_version"], 2)
+        self.assertEqual(d["size_bytes"], 2**64 - 1)
+        self.assertEqual(d["sources"]["size_bytes"], "fixture")
+        self.assertIn({"field": "size_bytes", "source": "alternative", "value": "4096"}, d["evidence"])
+        self.assertIn("metadata_conflict", d["warnings"])
+        self.assertLessEqual(len(d["evidence"]), 64)
+
     def test_sources_and_arrays(self):
         """! @brief Verify evidence labels, list types, and deterministic warning deduplication."""
         d = self.device()
@@ -132,7 +153,11 @@ class OutputContract(unittest.TestCase):
             with self.subTest(sample=sample):
                 r = subprocess.run([BINARY, "bytes"], input=sample, capture_output=True, check=True)
                 value = json.loads(r.stdout.decode("utf-8", errors="strict"))
-                self.assertIsInstance(value["devices"][0]["model"], str)
+                expected = sample.decode("utf-8", errors="replace")
+                # The encoder consumes one byte per malformed sequence, including truncated tails.
+                if sample in (b"\xe2\x82", b"\xf0\x9f", b"\xf0\x9f\x98"):
+                    expected = "\ufffd" * len(sample)
+                self.assertEqual(value["devices"][0]["model"], expected)
 
 
 if __name__ == "__main__":

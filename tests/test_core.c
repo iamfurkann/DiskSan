@@ -89,7 +89,7 @@ static void classifications(void)
         {"SCSI optical", {.disk=true, .scsi=true, .optical=true}, 0, "disk", "scsi", "scsi", "unknown"},
         {"USB unknown protocol", {.disk=true, .usb=true, .scsi=true}, 0, "disk", "usb", "unknown", "unknown"},
         {"USB ATA evidence", {.disk=true, .usb=true, .ata=true}, 0, "disk", "usb", "ata", "unknown"},
-        {"USB contradictory NVMe", {.disk=true, .usb=true, .nvme=true}, 0, "disk", "unknown", "unknown", "unknown"},
+        {"USB native NVMe evidence", {.disk=true, .usb=true, .nvme=true}, 0, "disk", "usb", "nvme", "unknown"},
         {"virtio", {.disk=true, .virtio=true}, 0, "virtual", "virtio", "unknown", "unknown"},
         {"loop", {.disk=true, .virtual_device=true}, 0, "virtual", "unknown", "unknown", "unknown"},
         {"dm", {.disk=true, .virtual_device=true, .composite=true}, 0, "composite", "unknown", "unknown", "unknown"},
@@ -129,12 +129,14 @@ static void identity(void)
     for (unsigned int i = 0; i < 3; ++i) {
         ds_device d;
         ds_device_init(&d);
+        d.platform = "linux";
+        CHECK(ds_text_offer(&d, &d.device_id, i == 1U ? "namespace:1" : "namespace:0", "fixture") == 0);
         d.major_number = 259;
         d.has_devnum = true;
         d.minor_number = i == 2U ? 0U : i;
         CHECK(ds_text_offer(&d, &d.serial, "DUPLICATE", "fixture") == 0);
         CHECK(ds_text_offer(&d, &d.controller, "/sys/example/nvme0", "fixture") == 0);
-        CHECK(ds_text_offer(&d, &d.path, i == 0U ? "/dev/nvme0n2" : "/dev/nvme0n1", "fixture") == 0);
+        CHECK(ds_text_offer(&d, &d.path, i != 1U ? "/dev/nvme0n2" : "/dev/nvme0n1", "fixture") == 0);
         ds_facts f = {.disk=true, .nvme=true};
         CHECK(ds_classify(&d, &f) == 0);
         CHECK(ds_inventory_add(&inventory, &d) == 0);

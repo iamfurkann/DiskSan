@@ -47,7 +47,7 @@ macOS uses IOMedia size/flags and nearby Device/Protocol Characteristics. Disk A
 
 Windows uses SetupAPI interface identity, bounded STORAGE_DEVICE_DESCRIPTOR text, storage device numbers, and length/alignment queries. Read-access denial may fall back to zero-access queries. Unavailable capacity or sector data is never fabricated.
 
-The first valid field value wins. Different later evidence produces `metadata_conflict`; this candidate does not export the complete alternative value. Serial is never a deduplication key. Unknown Unix numbers on Windows cannot merge unrelated records.
+The first valid field value wins. Different later evidence produces `metadata_conflict`; bounded supplemental evidence retains the alternative source/value as described below. Serial is never a deduplication key. Unknown Unix numbers on Windows cannot merge unrelated records.
 
 ## Warnings and encoding
 
@@ -58,3 +58,15 @@ Linux adds context such as `devnode_permission_denied` and `ioctl_unsupported`; 
 JSON preserves valid UTF-8 and replaces malformed bytes with U+FFFD. ASCII/C1 controls are escaped. Terminal output represents non-ASCII bytes and controls as `\xNN`. Metadata is limited to 4096 bytes; long identifiers are rejected instead of silently truncated into plausible identities. Tables additionally shorten displayed paths/models. JavaScript Number cannot represent every capacity above 2^53-1 exactly; consumers need suitable integer-aware JSON handling.
 
 Snapshots are not atomic. Native ID, dev_t, serial, registry ID, and interface paths do not replace target revalidation for future destructive operations.
+
+## 0.1.1 compatible additions
+
+Schema remains 2. Existing field names/types, the read-only envelope, null semantics, and exit codes remain unchanged. Each device adds `evidence`, an array of `{field, source, value}` strings. Numeric/boolean observations use unsigned decimal strings (0/1 for booleans); primary numeric/boolean fields retain their original JSON types. Primary values and `sources` still identify the retained observation.
+
+At most 64 deduplicated observations are retained per device, each component bounded by the 4096-byte metadata limit. A repeated source/value does not consume another slot. On overflow, `evidence_limit_reached` warns that supplemental observations were truncated; primary fields stay intact. Evidence is sorted by field/source/value. The array contains conflicting alternatives and corroborating observations from different sources; `metadata_conflict` distinguishes contradictory values. `duplicate_record_merged` identifies reconciliation separately from ordinary source disagreement. Detail output escapes evidence just like other metadata.
+
+Matching native IDs can merge only with the same platform/role and consistent known device numbers. A known number/path collision with a different/missing native ID fails explicitly. A number missing from one otherwise matching record may be enriched with `identity_partially_verified`. Serial and controller are never identity keys. Records sort by path, then platform/native ID; supplemental arrays sort independently.
+
+Linux `device_id` is `syspath#diskseq=N` when a valid generation is available, otherwise syspath with `identity_generation_unavailable`. This is a snapshot token, not a persistent device identity. Native ID strings were never a permanent identifier API. Windows keeps SetupAPI identity and null Unix numbers; macOS keeps registry identity and separate APFS roles.
+
+USB plus independently observed native NVMe evidence yields transport `usb`, protocol `nvme`, role `disk`, and unknown media, with `usb_bridge_identity_and_passthrough_unverified`. A model name alone cannot set this evidence. USB with generic SCSI access still has unknown native protocol. Physical bridge passthrough was not validated by this change.

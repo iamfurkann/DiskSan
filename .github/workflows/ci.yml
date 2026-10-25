@@ -1,0 +1,76 @@
+# @file
+# @brief Build and test read-only discovery on Linux, macOS, and native MSVC.
+name: Read-only discovery
+'on':
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unix:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux GCC Release
+            os: ubuntu-24.04
+            cc: gcc
+            mode: Release
+            sanitizers: 'OFF'
+          - name: Linux Clang ASan UBSan
+            os: ubuntu-24.04
+            cc: clang
+            mode: Debug
+            sanitizers: 'ON'
+          - name: macOS AppleClang Release
+            os: macos-15
+            cc: clang
+            mode: Release
+            sanitizers: 'OFF'
+    env:
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Linux build dependencies on the disposable runner
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build pkg-config libudev-dev
+      - name: Configure C17 with warnings as errors
+        run: cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_BUILD_TYPE=${{ matrix.mode }} -DDISKSAN_SANITIZERS=${{ matrix.sanitizers }} -DDISKSAN_WERROR=ON
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Portable contracts
+        run: ctest --test-dir build -L portable --output-on-failure -V
+      - name: Fault injection
+        run: ctest --test-dir build -L fault --output-on-failure -V
+      - name: Native metadata integration
+        run: ctest --test-dir build -L integration --output-on-failure -V
+      - name: Packaging smoke
+        if: matrix.mode == 'Release'
+        run: ctest --test-dir build -L packaging --output-on-failure -V
+  windows:
+    name: Windows MSVC C17 Release
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configure native MSVC x64
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DDISKSAN_WERROR=ON
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+      - name: Portable contracts and deterministic faults
+        run: ctest --test-dir build -C Release -L portable --output-on-failure -V
+      - name: Native metadata integration
+        run: ctest --test-dir build -C Release -L integration --output-on-failure -V
+      - name: Packaging smoke
+        run: ctest --test-dir build -C Release -L packaging --output-on-failure -V

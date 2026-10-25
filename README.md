@@ -2,7 +2,7 @@
 
 DiskSan is a **read-only disk discovery and identification CLI** written in C17. It shares a portable metadata and classification core across Linux, macOS, and Windows, with a native discovery adapter for each operating system.
 
-Version 0.1.0 inventories devices and reports evidence and uncertainty. It does not erase, sanitize, format, discard, modify partitions, or issue erasure certificates. The current interface runs in a terminal; there is no graphical application yet.
+Version 0.1.1 inventories devices and reports evidence and uncertainty. It does not erase, sanitize, format, discard, modify partitions, or issue erasure certificates. The current interface runs in a terminal; there is no graphical application yet.
 
 Repository: [iamfurkann/DiskSan](https://github.com/iamfurkann/DiskSan).
 
@@ -16,9 +16,15 @@ Repository: [iamfurkann/DiskSan](https://github.com/iamfurkann/DiskSan).
 
 The Windows package is a **preview** until native acceptance tests pass. Each platform has a separate archive with the same version number. See [distribution](docs/DISTRIBUTION.md) for filenames, requirements, and package validation. Source publication does not imply a tagged binary release.
 
+## Reliability in 0.1.1
+
+Repeated native identities are reconciled without discarding additional metadata, aliases, relationships, or warnings. Conflicting identity/role observations fail explicitly. Bounded supplemental evidence exposes alternate sources while preserving JSON schema 2. Linux generation changes and partial scans have deterministic fault tests.
+
+[CI](docs/CI.md) defines Linux GCC, Linux Clang ASan/UBSan, macOS AppleClang, and Windows MSVC jobs. A checked-in workflow is not evidence of a successful hosted run. See the [0.1.1 validation report](docs/WORK_REPORT_0.1.1.md) for executed checks and remaining gates; [security reporting](SECURITY.md) covers sensitive findings.
+
 ## Build and test
 
-Requirements: a C17 compiler, CMake 3.20 or newer, and Python 3 for tests. Linux additionally needs pkg-config and libudev development files. macOS uses the Xcode Command Line Tools and system IOKit, CoreFoundation, and Disk Arbitration frameworks. Windows targets Visual Studio with C17 support or MinGW-w64; MSVC has not yet been validated.
+Requirements: a C17 compiler, CMake 3.20 or newer, and Python 3.9 or newer for tests. Linux additionally needs pkg-config and libudev development files. macOS uses the Xcode Command Line Tools and system IOKit, CoreFoundation, and Disk Arbitration frameworks. Windows targets Visual Studio with C17 support or MinGW-w64; MSVC has not yet been validated.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

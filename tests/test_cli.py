@@ -61,8 +61,8 @@ class CLI(unittest.TestCase):
                 self.assertIn(b"requires Linux, macOS or Windows", r.stderr)
 
     def test_output_failure(self):
-        # A read-only regular file descriptor cannot accept stdout writes.
-        """! @brief Verify that a read-only stdout descriptor produces an output-error status."""
+        """! @brief Require output failure on an inherited read-only file handle on Unix and Windows."""
+        # Python duplicates this open handle for the child; no Unix preexec/close-fd assumption.
         with open(__file__, "rb") as target:
             r = subprocess.run([BINARY, "--version"], stdout=target, stderr=subprocess.PIPE)
         self.assertEqual(r.returncode, 1)

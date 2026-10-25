@@ -125,7 +125,16 @@ static void json_device(FILE *out, const ds_device *d)
     fputs("},\"stable_paths\":", out); json_strings(out, &d->stable_paths);
     fputs(",\"holders\":", out); json_strings(out, &d->holders);
     fputs(",\"slaves\":", out); json_strings(out, &d->slaves);
-    fputs(",\"warnings\":", out); json_strings(out, &d->warnings);
+    fputs(",\"evidence\":[", out);
+    for (size_t i = 0; i < d->evidence_count; ++i) {
+        const ds_observation *o = &d->evidence[i];
+        if (i) fputc(',', out);
+        fputs("{\"field\":", out); ds_json_string(out, o->field);
+        fputs(",\"source\":", out); ds_json_string(out, o->source);
+        fputs(",\"value\":", out); ds_json_string(out, o->value);
+        fputc('}', out);
+    }
+    fputs("],\"warnings\":", out); json_strings(out, &d->warnings);
     fputc('}', out);
 }
 
@@ -188,6 +197,11 @@ static void text_detail(FILE *out, const ds_device *d)
     text_strings(out, "Holders:", &d->holders);
     text_strings(out, "Slaves:", &d->slaves);
     text_strings(out, "Warnings:", &d->warnings);
+    for (size_t i = 0; i < d->evidence_count; ++i) {
+        text_field(out, "Evidence field:", d->evidence[i].field);
+        text_field(out, "Evidence source:", d->evidence[i].source);
+        text_field(out, "Evidence value:", d->evidence[i].value);
+    }
 }
 
 /** @brief Filter and serialize a snapshot, then report stream or flush failures. */

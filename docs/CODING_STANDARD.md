@@ -57,7 +57,7 @@ Unknown values stay unknown. Preserve a known zero separately from absence. Keep
 
 ## Device-access boundary
 
-Version 0.1.0 performs metadata queries only. Preserve Linux O_RDONLY and the three-ioctl allowlist. macOS uses registry/description APIs without raw opens. Windows requests read or zero access, never GENERIC_WRITE. Tests must not require root or write device data. New native queries require review of their documented access and side effects.
+Version 0.1.1 performs metadata queries only. Preserve Linux O_RDONLY and the three-ioctl allowlist. macOS uses registry/description APIs without raw opens. Windows requests read or zero access, never GENERIC_WRITE. Tests must not require root or write device data. New native queries require review of their documented access and side effects.
 
 ## Enforcement and reference generation
 
@@ -71,3 +71,11 @@ doxygen Doxyfile
 The `documentation` CTest gate verifies the source manifest, ASCII policy, file/function briefs, public header parameters/returns, and Python docstrings. It is a focused checker for this repository's conventional declarations, not a full C parser or a proof that prose is English or correct. Review remains necessary. Generated API HTML is written under `build-api/html` and must not be committed.
 
 The syntax follows the official [Doxygen comment-block guide](https://www.doxygen.nl/manual/docblocks.html) and [special commands](https://www.doxygen.nl/manual/commands.html).
+
+## Failure seams and CI
+
+Keep test substitution outside production behavior. The allocation test compiles a separate core object with a forced include after CRT declarations; production allocation is unchanged. Linux link wrappers substitute only documented boundaries. Portable Windows buffer validation uses ordinary byte fixtures and must not be reported as native handle testing. Every new helper, wrapper, and test still needs `@brief`.
+
+Inventory merge must be transactional: failed allocation or ambiguous identity preserves both inputs. Direct metadata operations may retain partial diagnostic evidence before a fatal allocation error; callers always clean up the record and must not publish the failed result. Update tests when changing this contract.
+
+Workflow YAML needs file/brief comments, explicit least-privilege permissions, and no secret-bearing pull-request execution. The documentation checker includes `.github` and JSON fixtures in the source manifest. Workflow syntax is validated separately; ASCII validation alone is not a YAML or security check.

@@ -214,7 +214,7 @@ int ds_discover(ds_inventory *inventory, const char *selector, char *error, size
         else if (result == 0 && (!selector || (d.major_number == (unsigned int)major(selected.st_rdev) && d.minor_number == (unsigned int)minor(selected.st_rdev))))
             result = ds_inventory_add(inventory, &d);
         ds_device_free(&d);
-        if (result < 0) { rc = 1; (void)snprintf(error, size, "Memory allocation failed."); break; }
+        if (result < 0) { rc = selector && result == -2 ? 3 : 1; (void)snprintf(error, size, "%s", result == -2 ? "Ambiguous device identity; retry." : "Memory allocation failed."); break; }
     }
     if (rc == 0 && !IOIteratorIsValid(iterator)) { rc = 1; (void)snprintf(error, size, "IOKit inventory changed during enumeration; retry."); }
     IOObjectRelease(iterator);

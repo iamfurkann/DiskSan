@@ -1,25 +1,26 @@
 # Roadmap
 
-DiskSan targets Linux, macOS, and Windows with one source tree and version number, delivered as separate native packages. Current validation prioritizes macOS and Linux. Native Windows acceptance is deferred to the project owner's Windows device.
+One C17 source tree targets Linux, macOS, and Windows, with separate platform/architecture downloads. Native validation prioritizes macOS/Linux; Windows remains a preview until the owner's machine and hosted MSVC gates pass.
 
-## Current candidate
+## 0.1.1 - Reliability & Release Hardening
 
-- Linux: live Debian x86-64 inventory, by-id/partition selection, ioctl/libudev fault injection, and sanitizer validation.
-- macOS: native IOKit/Disk Arbitration inventory, APFS role distinctions, and live Release/sanitizer validation.
-- Windows: SetupAPI/storage-query adapter and MinGW cross-build; native execution remains unverified.
-- Distribution: separate CPack archives; packaging does not automatically create a public release.
-- Maintenance: English repository content, Doxygen briefs, public API contracts, and documentation checks.
+Transactional identity reconciliation, explicit ambiguity failures, bounded alternative-source evidence, Linux generation/partial-scan fixtures, portable Windows metadata validation, CI definitions, and archive checks are implemented. See the versioned validation report for executed evidence. Hosted CI and native Windows acceptance must be observed, not inferred from workflow/source existence.
 
-## Open work
+## Remaining gates
 
 | Priority | Work |
 |---|---|
-| P0 - Windows release gate | Native package, CLI, inventory/partition/info, permissions, and JSON acceptance on Windows |
-| P1 | Physical USB/SATA/NVMe/SCSI hardware matrix, hotplug, and device-number reuse |
+| P0 - Windows release gate | NATIVE_WINDOWS_ACCEPTANCE_PENDING: MSVC build, real CLI/JSON/inventory/partition/info, ordinary-user permissions, and package acceptance |
+| P1 | Physical USB/SATA/NVMe/SCSI, hotplug, real device-number reuse, and bridge evidence |
+| P1 | Comprehensive native Windows/IOKit allocation/handle failure injection; current synthetic helpers do not cover all native API paths |
 | P1 | Multi-device APFS/RAID/multipath and Windows volume topology |
-| P1 | Native MSVC build and additional Windows descriptor/API fault injection |
-| P1 | Alternative-value conflict reporting and comprehensive allocation-failure injection |
-| Release decisions | Signing/notarization and tagged binary publication |
-| P2 | Linux ARM64, Intel/universal macOS, Windows ARM64, and a broader CI matrix |
+| Release gates | Hosted CI on the committed revision, maintainer publication, optional signing/notarization |
+| P2 | Linux ARM64, Intel/universal macOS, Windows ARM64, and broader runtime compatibility |
 
-Before version 0.2.0, define target revalidation and usage policy that never treats a snapshot identity as erase authorization. Future NVMe/ATA/SCSI sanitization work needs separate platform and hardware requirements. No destructive backend is implemented in this candidate.
+## 0.2.x - Policy before operations
+
+Design and validate target revalidation, usage-policy checks, and read-only capability reporting. Snapshots remain non-atomic and never authorize erasure. Define identity freshness and policy failure behavior before considering protocol operations.
+
+## 0.3.x and later
+
+Any NVMe/ATA/SCSI sanitize implementation needs a separate specification, platform/hardware scope, explicit target authorization, completion verification, and failure/recovery design. No destructive API, preflight write, or erasure certificate is part of 0.1.1.

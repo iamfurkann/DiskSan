@@ -94,7 +94,7 @@ int main(void)
     const char *warnings[] = {"devnode_permission_denied", "devnode_permission_denied", "device_disappeared", "device_disappeared", "device_disappeared", "devnode_open_failed"};
     for (size_t i = 0; i < sizeof(errors) / sizeof(*errors); ++i) {
         d = setup(); open_error = errors[i];
-        CHECK(ds_linux_probe(&d) == 0 && !d.size_bytes.known);
+        CHECK(ds_linux_probe(&d) == (errors[i] == ENOENT || errors[i] == ENODEV || errors[i] == ENXIO ? 1 : 0) && !d.size_bytes.known);
         CHECK(calls == 0 && closes == 0 && warns(&d, warnings[i]));
         ds_device_free(&d);
     }
@@ -102,7 +102,7 @@ int main(void)
     const char *ioctl_warnings[] = {"ioctl_permission_denied", "ioctl_unsupported", "ioctl_unsupported", "device_disappeared", "ioctl_failed"};
     for (size_t i = 0; i < sizeof(ioctl_errors) / sizeof(*ioctl_errors); ++i) {
         d = setup(); ioctl_error = ioctl_errors[i];
-        CHECK(ds_linux_probe(&d) == 0 && !d.size_bytes.known);
+        CHECK(ds_linux_probe(&d) == (ioctl_errors[i] == ENODEV ? 1 : 0) && !d.size_bytes.known);
         CHECK(closes == 1 && warns(&d, ioctl_warnings[i]));
         CHECK(ds_number_offer(&d, &d.size_bytes, 2048, "sysfs:size*512") == 0);
         CHECK(d.size_bytes.known && d.size_bytes.value == 2048);
@@ -111,7 +111,7 @@ int main(void)
     for (int i = 0; i < 3; ++i) {
         d = setup();
         wrong_type = i == 0; wrong_number = i == 1; stat_error = i == 2;
-        CHECK(ds_linux_probe(&d) == 0 && calls == 0 && closes == 1);
+        CHECK(ds_linux_probe(&d) == 1 && calls == 0 && closes == 1);
         CHECK(warns(&d, "device_identity_changed"));
         ds_device_free(&d);
     }

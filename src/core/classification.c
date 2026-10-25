@@ -10,14 +10,14 @@ int ds_classify(ds_device *d, const ds_facts *f)
     d->role = d->transport = d->protocol = d->media = "unknown";
     d->media_confidence = "unknown";
     d->classification_source = "platform_metadata";
-    bool conflict = (f->nvme && (f->usb || f->ata || f->virtio)) ||
+    bool conflict = (f->nvme && (f->ata || f->virtio)) ||
                     (f->virtio && (f->usb || f->ata));
     if (f->snapshot) d->role = "snapshot";
     else if (f->volume) d->role = "volume";
     else if (f->partition) d->role = "partition";
     else if (f->composite) d->role = "composite";
     else if (f->virtual_device || f->virtio) d->role = "virtual";
-    else if (f->nvme && !conflict) d->role = "namespace";
+    else if (f->nvme && !f->usb && !conflict) d->role = "namespace";
     else if (f->disk) d->role = "disk";
 
     if (conflict) return ds_warn(d, "classification_conflict");
@@ -25,6 +25,7 @@ int ds_classify(ds_device *d, const ds_facts *f)
         d->transport = "usb";
         /* USB SCSI access does not establish the media's native protocol. */
         if (f->ata) d->protocol = "ata";
+        if (f->nvme) d->protocol = "nvme";
         if (ds_warn(d, "usb_bridge_identity_and_passthrough_unverified") < 0) return -1;
     } else if (f->virtio) {
         d->transport = "virtio";

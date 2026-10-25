@@ -3,7 +3,7 @@
 PROJECT_NAME           = DiskSan
 OUTPUT_DIRECTORY       = build-api
 OUTPUT_LANGUAGE        = English
-INPUT                  = include src tests tools docs README.md CONTRIBUTING.md CHANGELOG.md
+INPUT                  = include src tests tools docs README.md CONTRIBUTING.md CHANGELOG.md SECURITY.md
 FILE_PATTERNS          = *.h *.c *.py *.md
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE  = README.md

@@ -20,7 +20,7 @@ int ds_discover(ds_inventory *inventory, const char *selector, char *error, size
 /**
  * @brief Query capacity and sector sizes after validating an opened block identity.
  * @param[in,out] d Initialized Linux record containing a native path and device number.
- * @return 0 on success or retained access/query warnings; -1 on allocation failure.
+ * @return 0 on success or retained access/query warnings; 1 on changed/disappeared identity; -1 on allocation failure.
  * @note Opens O_RDONLY and permits only BLKGETSIZE64, BLKSSZGET, and BLKPBSZGET.
  */
 int ds_linux_probe(ds_device *d);

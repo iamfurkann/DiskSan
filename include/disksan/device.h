@@ -31,6 +31,15 @@ typedef struct {
     const char *source; /**< @brief Borrowed source label, or null when unknown. */
 } ds_number;
 
+/** @brief Maximum retained supplemental observations per device. */
+#define DS_EVIDENCE_LIMIT 64U
+/** @brief Own one supplemental observation; numbers use unsigned decimal text. */
+typedef struct {
+    char *field; /**< @brief Owned field name. */
+    char *source; /**< @brief Owned source name; unknown if absent. */
+    char *value; /**< @brief Owned normalized value. */
+} ds_observation;
+
 /** @brief Own one snapshot record; identity is not authorization to erase a device. */
 typedef struct {
     ds_text path; /**< @brief Native device path accepted by the platform selector. */
@@ -57,6 +66,8 @@ typedef struct {
     ds_strings holders; /**< @brief Observed Linux holders; empty is not a topology guarantee. */
     ds_strings slaves; /**< @brief Observed Linux backing-device relationships. */
     ds_strings warnings; /**< @brief Deduplicated record-level warning codes. */
+    ds_observation *evidence; /**< @brief Owned bounded observations supplementing primary sources. */
+    size_t evidence_count; /**< @brief Number of initialized supplemental observations. */
     const char *role; /**< @brief Borrowed disk, namespace, partition, or other role label. */
     const char *transport; /**< @brief Borrowed transport label, or unknown. */
     const char *protocol; /**< @brief Borrowed protocol label, or unknown. */
@@ -146,10 +157,12 @@ bool ds_parse_u64(const char *text, uint64_t *value);
  */
 bool ds_sectors_to_bytes(const char *text, uint64_t *value);
 /**
- * @brief Consume a record on success, deduplicating by native identity or dev_t.
+ * @brief Reconcile matching native identities using an allocation-safe temporary record.
  * @param[in,out] inventory Non-null initialized destination inventory.
  * @param[in,out] device Initialized record; reset on success, retained on failure.
- * @return 0 when inserted or discarded as a duplicate; -1 on allocation failure.
+ * @return 0 when inserted or merged; -1 on allocation failure; -2 on ambiguous identity.
+ * @note Failure preserves both inputs. Matching dev_t alone never authorizes merging.
+ * @note Known role or device-number conflicts reject the scan instead of losing records.
  * @note Serial numbers are never deduplication keys. Both identities must share a platform.
  */
 int ds_inventory_add(ds_inventory *inventory, ds_device *device);

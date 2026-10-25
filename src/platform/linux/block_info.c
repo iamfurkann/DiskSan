@@ -15,7 +15,7 @@
 static int ioctl_warning(ds_device *d, int error)
 {
     if (error == EACCES || error == EPERM) return ds_warn(d, "ioctl_permission_denied");
-    if (error == ENODEV || error == ENXIO || error == ENOENT) return ds_warn(d, "device_disappeared");
+    if (error == ENODEV || error == ENXIO || error == ENOENT) return ds_warn(d, "device_disappeared") < 0 ? -1 : 1;
     if (error == ENOTTY || error == EOPNOTSUPP || error == EINVAL) return ds_warn(d, "ioctl_unsupported");
     return ds_warn(d, "ioctl_failed");
 }
@@ -29,7 +29,7 @@ int ds_linux_probe(ds_device *d)
     if (fd < 0) {
         int saved = errno;
         if (saved == EACCES || saved == EPERM) return ds_warn(d, "devnode_permission_denied");
-        if (saved == ENODEV || saved == ENXIO || saved == ENOENT) return ds_warn(d, "device_disappeared");
+        if (saved == ENODEV || saved == ENXIO || saved == ENOENT) return ds_warn(d, "device_disappeared") < 0 ? -1 : 1;
         return ds_warn(d, "devnode_open_failed");
     }
     struct stat st;
@@ -38,7 +38,7 @@ int ds_linux_probe(ds_device *d)
         major(st.st_rdev) != d->major_number || minor(st.st_rdev) != d->minor_number) {
         rc = ds_warn(d, "device_identity_changed");
         (void)close(fd);
-        return rc;
+        return rc < 0 ? -1 : 1;
     }
     /* Explicit, closed allowlist. No data-area reads or writes are performed. */
     uint64_t bytes = 0;
