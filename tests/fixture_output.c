@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
 
 /** @brief Terminate fixture construction when a metadata operation fails. */
 #define MUST(expr) do { if ((expr) < 0) { ds_inventory_free(&inventory); ds_device_free(&d); return 1; } } while (0)
@@ -32,6 +36,10 @@ int main(int argc, char **argv)
             MUST(ds_text_offer(&d, &d.model, long_model, "fixture"));
         }
         if (strcmp(mode, "bytes") == 0) {
+#ifdef _WIN32
+            /* Preserve Ctrl-Z and CRLF bytes instead of CRT text translation. */
+            MUST(_setmode(_fileno(stdin), _O_BINARY));
+#endif
             char input[DS_TEXT_LIMIT + 1U];
             size_t len = fread(input, 1, DS_TEXT_LIMIT, stdin);
             input[len] = '\0';

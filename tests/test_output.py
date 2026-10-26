@@ -145,9 +145,10 @@ class OutputContract(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
 
     def test_utf8_sequence_boundaries(self):
-        """! @brief Exercise truncated, overlong, surrogate, out-of-range, and boundary Unicode sequences."""
+        """! @brief Preserve raw stdin bytes and validate malformed and boundary Unicode sequences."""
         samples = [b"\xc2", b"\xe2", b"\xe2\x82", b"\xf0", b"\xf0\x9f", b"\xf0\x9f\x98",
                    b"\xc0\x80", b"\xed\xa0\x80", b"\xf4\x90\x80\x80", bytes(range(1, 256)),
+                   b"before\x1aafter", b"before\r\nafter",
                    "\u0080\u009f\u07ff\u0800\uffff\U00010000\U0010ffff".encode()]
         for sample in samples:
             with self.subTest(sample=sample):
