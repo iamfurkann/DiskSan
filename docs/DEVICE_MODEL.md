@@ -70,3 +70,54 @@ Matching native IDs can merge only with the same platform/role and consistent kn
 Linux `device_id` is `syspath#diskseq=N` when a valid generation is available, otherwise syspath with `identity_generation_unavailable`. This is a snapshot token, not a persistent device identity. Native ID strings were never a permanent identifier API. Windows keeps SetupAPI identity and null Unix numbers; macOS keeps registry identity and separate APFS roles.
 
 USB plus independently observed native NVMe evidence yields transport `usb`, protocol `nvme`, role `disk`, and unknown media, with `usb_bridge_identity_and_passthrough_unverified`. A model name alone cannot set this evidence. USB with generic SCSI access still has unknown native protocol. Physical bridge passthrough was not validated by this change.
+
+## 0.2.0 assessment envelope
+
+`list` and `info` keep every existing field and type. `assess` and `capabilities`
+use schema 2 with a separate operation envelope; they do not return `devices`,
+`shown` or `omitted`. Both perform the same revalidation and policy assessment.
+The `device` object uses exactly the inventory record schema above. Extra loop
+backing links used internally for policy do not change that inventory object.
+
+| Field | Contract |
+|---|---|
+| `operation` | `assess` or `capabilities` |
+| `assessment_kind` | `target-preflight` or `capability-evidence` |
+| `identity.status` | `verified_for_snapshot` only with positive identity consensus; otherwise `partially_verified` |
+| `identity.guarantees_future_identity`, `identity.atomic` | Literal `false` |
+| `identity.valid_until` | `end_of_observation`; diagnostic snapshots expire logically immediately |
+| `inspection_status` | `blocked`, `review_required`, or `no_blockers_observed_in_snapshot`; none authorizes an action |
+| `erase_authorized` | Literal `false`, including synthetic fully observed fixtures |
+| `observations` | `{check, state, source, detail}`; state is the string `true`, `false` or `unknown` |
+| `findings` | `{code, category, subject, severity, state, source, message}` |
+| `capabilities` | Six method summaries and their independent source observations |
+
+Finding severity is `block`, `review` or `info`. Categories include identity, role,
+usage, topology, capability, platform_limit and observation_error. `subject` links
+the finding to a check dimension or method, while `source` identifies derived
+policy (`policy:observed_evidence`); original provenance is in observations and
+method evidence. Stable codes include `mounted_dependency`, `system_dependency`,
+`active_swap_dependency`, `logical_target`, `layered_backing`, `identity_unverified`,
+`generation_unverified`, `topology_unverified`, `usage_unverified`, and
+`snapshot_not_authorization`. Consumers must tolerate new codes and retain unknown
+codes rather than silently discarding them.
+
+Methods are `nvme_sanitize_block_erase`, `nvme_sanitize_crypto_erase`,
+`nvme_sanitize_overwrite`, `ata_security_erase`, `ata_sanitize` and `scsi_sanitize`.
+Each has `support`, `os_access`, `applicability`, `passthrough` and an `evidence`
+array of `{dimension, state, source, detail}`. States are `observed_supported`,
+`observed_unsupported`, `unknown`, and `unavailable`. These describe the respective
+dimension only: support does not imply OS access or applicable scope. Conflicts
+retain source observations and reduce summaries to unknown. Native 0.2.0 uses
+`provider:metadata_only` and reports all four dimensions unknown for every method;
+other states are exercised by synthetic fixtures, not hardware verification.
+
+Evidence arrays are deterministic, exact duplicates are ignored, and conflicts
+are retained. Each assessment permits 64 check and 64 method observations, with
+source strings under 96 bytes and detail strings under 256 bytes. Invalid input
+or overflow poisons evaluation; no success payload is emitted. Known identity,
+generation or topology changes return exit 3; fatal collection/output errors
+return nonzero. Output failure can leave partial bytes, so consumers must require
+both exit 0 and complete valid JSON. Exit 0 with blocked/review findings means only
+that inspection completed. Current native collectors always retain incomplete
+usage/physical scope and never claim the fully observed synthetic policy state.

@@ -40,6 +40,20 @@ int main(void)
     CHECK(ds_windows_wide_status(long_path, DS_TEXT_LIMIT + 2U) == DS_WIDE_TOO_LONG);
     long_path[DS_TEXT_LIMIT] = 0;
     CHECK(ds_windows_wide_status(long_path, DS_TEXT_LIMIT + 1U) == DS_WIDE_OK);
+    const uint16_t multi[] = {'C', ':', '\\', 0, 'D', ':', '\\', 0, 0};
+    const uint16_t bad_multi[] = {'C', 0, 0xdc00, 0, 0};
+    CHECK(ds_windows_multisz_valid(multi, 9));
+    CHECK(ds_windows_multisz_valid(multi + 8, 1));
+    CHECK(!ds_windows_multisz_valid(NULL, 1));
+    CHECK(!ds_windows_multisz_valid(multi, 0));
+    CHECK(!ds_windows_multisz_valid(multi, SIZE_MAX));
+    for (size_t n = 1; n < 9; ++n) CHECK(!ds_windows_multisz_valid(multi, n));
+    CHECK(!ds_windows_multisz_valid(bad_multi, 5));
+    const uint16_t embedded[] = {'C', 0, 0, 'D', 0, 0};
+    CHECK(!ds_windows_multisz_valid(embedded, 6));
+    const uint16_t pair_multi[] = {0xd83d, 0xde00, 0, 0};
+    CHECK(ds_windows_multisz_valid(pair_multi, 4));
+    CHECK(ds_windows_multisz_valid(pair_multi + 2, 2));
     printf("%u Windows metadata boundary assertions passed (synthetic, no native API calls).\n", checks);
     return 0;
 }

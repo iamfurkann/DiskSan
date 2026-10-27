@@ -3,6 +3,7 @@
  * @brief Parse the read-only CLI and dispatch discovery and output.
  */
 #include "disksan/discovery.h"
+#include "disksan/target.h"
 #include "disksan/version.h"
 #include <signal.h>
 #include <stdio.h>
@@ -21,8 +22,12 @@ static int usage(FILE *out, int code)
           "  disksan --version\n"
           "  disksan list [--all] [--json]\n"
           "  disksan info [--json] [--] <block-device> [--json]\n"
+          "  disksan assess [--json] [--] <native-device-selector> [--json]\n"
+          "  disksan capabilities [--json] [--] <native-device-selector> [--json]\n"
           "Read-only inventory for Linux, macOS and Windows. No erase operations exist.\n"
           "Default list omits partitions, volumes and snapshots; --all includes them.\n"
+          "Assessments and capability observations never authorize erasure.\n"
+          "Inspection exit 0 includes blocked/review findings; it means inspection succeeded.\n"
           "Examples: disksan list --json; disksan info /dev/sda --json\n"
           "Exit: 0 success, 1 system, 2 usage, 3 invalid target, 4 permission.\n", out);
     return fflush(out) == 0 ? code : 1;
@@ -42,27 +47,34 @@ static int run_main(int argc, char **argv)
     if (argc < 2) return usage(stderr, 2);
     bool list = strcmp(argv[1], "list") == 0;
     bool info = strcmp(argv[1], "info") == 0;
-    if (!list && !info) return usage(stderr, 2);
+    bool assess = strcmp(argv[1], "assess") == 0;
+    bool capabilities = strcmp(argv[1], "capabilities") == 0;
+    bool inspect = assess || capabilities;
+    if (!list && !info && !inspect) return usage(stderr, 2);
+    if (inspect && argc == 3 && strcmp(argv[2], "--help") == 0) return usage(stdout, 0);
     bool json = false, all = false, end_options = false;
     const char *selector = NULL;
     for (int i = 2; i < argc; ++i) {
         if (!end_options && strcmp(argv[i], "--") == 0) { end_options = true; continue; }
         if (!end_options && strcmp(argv[i], "--json") == 0 && !json) json = true;
         else if (!end_options && strcmp(argv[i], "--all") == 0 && list && !all) all = true;
-        else if (info && !selector && (end_options || argv[i][0] != '-')) selector = argv[i];
+        else if ((info || inspect) && !selector && (end_options || argv[i][0] != '-')) selector = argv[i];
         else return usage(stderr, 2);
     }
-    if (info && (!selector || !*selector)) return usage(stderr, 2);
+    if ((info || inspect) && (!selector || !*selector)) return usage(stderr, 2);
     ds_inventory inventory = {0};
+    ds_assessment assessment;
     char error[512] = {0};
-    int result = ds_discover(&inventory, selector, error, sizeof(error));
+    int result = inspect ? ds_assess_target(&inventory, &assessment, selector, error, sizeof(error)) :
+                           ds_discover(&inventory, selector, error, sizeof(error));
     if (result != 0) {
         fputs("DiskSan: ", stderr);
         ds_terminal_string(stderr, error, sizeof(error));
         fputc('\n', stderr);
     } else {
         ds_inventory_sort(&inventory);
-        result = ds_output(stdout, &inventory, json, all || info, info);
+        result = inspect ? ds_assessment_output(stdout, &inventory.items[0], &assessment, json, capabilities) :
+                           ds_output(stdout, &inventory, json, all || info, info);
         if (result != 0) fputs("DiskSan: output failed.\n", stderr);
     }
     ds_inventory_free(&inventory);

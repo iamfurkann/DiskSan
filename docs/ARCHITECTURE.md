@@ -33,7 +33,7 @@ macOS reads registry and Disk Arbitration descriptions without opening device da
 
 ## Extension boundary
 
-Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Version 0.1.1 intentionally contains no erase backend.
+Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Version 0.2.0 intentionally contains no erase backend.
 
 ## Primary references
 
@@ -53,3 +53,31 @@ The first normalized, validated field remains primary according to adapter sourc
 Linux collection is separated from enumeration in `device_info.c` with a narrow private seam for deterministic fixtures. `diskseq` is checked before/after collection and included in identity when valid. Without it, syspath/dev_t reuse is not fully detectable and `identity_generation_unavailable` remains visible. A probe that observes replacement/disappearance is dropped, with a scan warning; permission denial preserves valid sysfs evidence. macOS registry references and Windows handles retain their native cleanup paths; comprehensive native API allocation/handle injection remains open.
 
 Windows metadata helpers validate buffer bounds independently of Windows headers. SetupAPI detail paths require a bounded terminator and valid surrogate pairs before conversion, while allocation failure remains fatal. Storage-number type/partition fields are checked before creating a PhysicalDrive alias. Queries remain the existing read-only allowlist. See Microsoft's [interface-detail contract](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw) and [storage device numbers](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-storage_device_number).
+
+## Assessment pipeline in 0.2.0
+
+`src/core/target.c` orchestrates the native selection/usage/reselection window and
+is linked with the selected platform adapter to avoid a static-library dependency
+cycle. `target_compare.c` is pure, comparing known identity, generation, state and
+relationships. The original selector is reused at the closing observation.
+
+`usage.c` builds a bounded connected component over explicit parent/holder/slave
+links. Reverse links and shared-parent siblings intentionally overapproximate
+possible dependencies. At most 1,024 records participate; ambiguity or limits fail
+explicitly. Unknown links are never treated as a complete physical graph.
+
+The Linux adapter maps namespace-local mount IDs, stat-only swap backing and
+observed loop filenames into that component, then checks a second graph snapshot.
+The macOS adapter uses copied Disk Arbitration volume URLs, cached `getfsstat`
+metadata and stat-only node IDs, bracketed by registry snapshots. Windows enumerates
+volume GUIDs, queries at most 64 disk extents twice per zero-access handle and
+reads bounded mount paths. It cannot establish a durable Windows generation.
+
+`assessment.c` owns fixed-size evidence and derives policy with stable finding
+codes. `capabilities.c` makes no native query; six methods retain independently
+unknown support/access/applicability/passthrough. `assessment_output.c` renders the
+separate schema-2 envelope and method provenance. Old inventory fields use the
+same device renderer. No snapshot, token or handle authorizes a future operation.
+
+See [the query audit](READ_ONLY_AUDIT_0.2.0.md) for exact native calls, bounds,
+fall-back behavior and test coverage; [the schema](DEVICE_MODEL.md) defines output.

@@ -30,6 +30,20 @@ enum ds_wide_status ds_windows_wide_status(const void *bytes, size_t units)
     }
     return DS_WIDE_INVALID;
 }
+/** @brief Reject malformed UTF-16, missing terminators, embedded empty entries and trailing garbage. */
+bool ds_windows_multisz_valid(const void *bytes, size_t units)
+{
+    if (!bytes || !units || units > DS_TEXT_LIMIT) return false;
+    size_t start = 0;
+    while (start < units) {
+        if (!unit_at(bytes, start)) return start + 1U == units ||
+            (start == 0U && units == 2U && !unit_at(bytes, 1));
+        if (ds_windows_wide_status((const unsigned char *)bytes + start * sizeof(uint16_t), units - start) != DS_WIDE_OK) return false;
+        while (start < units && unit_at(bytes, start)) ++start;
+        ++start;
+    }
+    return false;
+}
 /** @brief Reject short, oversized, or inconsistent descriptor sizes before dereferencing offsets. */
 bool ds_windows_descriptor_valid(size_t allocated, size_t returned, size_t declared, size_t minimum)
 {

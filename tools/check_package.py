@@ -33,9 +33,10 @@ def inspect(archive, binary, version, run):
     executable = "bin/disksan.exe" if binary.suffix.lower() == ".exe" else "bin/disksan"
     docs = ["README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "LICENSE"]
     expected = {"share/doc/disksan/" + name: (ROOT / name).read_bytes() for name in docs}
-    for path in (ROOT / "docs").iterdir():
-        if path.suffix == ".md" or path.name == "FILE_MANIFEST.txt":
-            expected["share/doc/disksan/docs/" + path.name] = path.read_bytes()
+    for path in (ROOT / "docs").rglob("*"):
+        if path.is_file() and (path.suffix == ".md" or path.name == "FILE_MANIFEST.txt"):
+            relative = path.relative_to(ROOT / "docs").as_posix()
+            expected["share/doc/disksan/docs/" + relative] = path.read_bytes()
     expected[executable] = binary.read_bytes()
     missing = sorted(set(expected) - set(entries))
     extra = sorted(set(entries) - set(expected))

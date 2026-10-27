@@ -91,7 +91,7 @@ static void json_strings(FILE *out, const ds_strings *strings)
 }
 
 /** @brief Serialize all device fields, evidence sources, relationships, and warnings. */
-static void json_device(FILE *out, const ds_device *d)
+void ds_json_device(FILE *out, const ds_device *d)
 {
     const char *text_names[] = {"path", "sysfs_path", "model", "vendor", "serial", "wwn", "eui", "nguid", "parent", "controller", "device_id"};
     const ds_text *texts[] = {&d->path, &d->sysfs_path, &d->model, &d->vendor, &d->serial, &d->wwn, &d->eui, &d->nguid, &d->parent, &d->controller, &d->device_id};
@@ -221,7 +221,7 @@ int ds_output(FILE *out, const ds_inventory *inventory, bool json, bool all, boo
         if (!all && !ds_default_visible(d)) continue;
         if (json) {
             if (shown) fputc(',', out);
-            json_device(out, d);
+            ds_json_device(out, d);
         } else if (detail) text_detail(out, d);
         else {
             ds_terminal_string(out, d->path.value, 48);

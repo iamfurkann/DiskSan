@@ -57,7 +57,7 @@ Unknown values stay unknown. Preserve a known zero separately from absence. Keep
 
 ## Device-access boundary
 
-Version 0.1.1 performs metadata queries only. Preserve Linux O_RDONLY and the three-ioctl allowlist. macOS uses registry/description APIs without raw opens. Windows requests read or zero access, never GENERIC_WRITE. Tests must not require root or write device data. New native queries require review of their documented access and side effects.
+Version 0.2.0 performs metadata queries only. Preserve Linux O_RDONLY and the three-ioctl allowlist. macOS uses registry/description APIs without raw opens. Windows requests read or zero access, never GENERIC_WRITE. Tests must not require root or write device data. New native queries require review of their documented access and side effects.
 
 ## Enforcement and reference generation
 

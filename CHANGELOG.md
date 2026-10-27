@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0 - Read-only Target Assessment (unreleased)
+
+- Add `assess` and `capabilities` with a separate schema-2 envelope, stable policy
+  findings, original evidence, explicit non-atomic identity limits and literal
+  `erase_authorized: false`. Existing inventory commands and exit codes remain.
+- Add selected-target revalidation, bounded observed topology, Linux proc/swap and
+  loop-backing observations, macOS mount/volume metadata, and Windows zero-access
+  volume-extents queries with conservative fallbacks.
+- Keep six method families independently unknown for support, OS access,
+  applicability and passthrough; no protocol commands or destructive backend exist.
+- Add policy/target/parser/graph fixtures, CLI contracts, Linux/macOS native usage
+  faults and live read-only assessment tests. Repair nested-document package checks.
+- Native macOS/Linux results and Windows cross-build evidence are in
+  `docs/PROGRESS.md`. Windows native runtime/MSVC and physical-controller coverage
+  remain separate open gates; this change set has not been published.
+
 ## 0.1.1 - Reliability & Release Hardening (unreleased)
 
 ### Added
