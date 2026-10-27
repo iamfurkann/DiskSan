@@ -6,8 +6,8 @@
 
 - Target version: `0.2.0` (source implementation verified; source declares 0.2.0).
 - Baseline examined: `main` HEAD `58d07c9a2f00f9a21c4e6c6a7ac96d9febe332bf` on 2026-10-26; revalidate against actual working tree.
-- Active milestone: `M7 complete - Maintainer review and external release gates`.
-- Status: `IMPLEMENTATION_COMPLETE` for the accessible acceptance scope; publication gates remain explicit.
+- Active milestone: `Windows MSVC initialization correction - hosted rerun pending`.
+- Status: local correction verified with MinGW and portable regression tests; reported hosted MSVC build `FAIL`, corrected MSVC build `NOT_RUN`. Publication gates remain open.
 - Source-of-truth specification: `docs/specs/v0.2.0.md`.
 - Public v0.1.1 tag/release: `NOT_CONFIRMED` as of research snapshot; check again if it affects task.
 
@@ -41,15 +41,17 @@ Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `PASS`, `FAIL`, `BLOCKED`, `NOT
 
 ## Current blockers
 
+- The maintainer supplied a hosted MSVC build failure (C4701/C2220 in `windows_usage_fault`). The initialization correction below is local; its hosted MSVC rerun remains `NOT_RUN`.
 - Windows native validation and physical hardware matrix were open in the 0.1.1 report; check actual access and current evidence.
 - Any unavailable hardware/API must remain `unknown` or `not_verified`, never be inferred as a passing test.
 
 ## Next action
 
-The maintainer owns native Windows acceptance, hosted CI on a committed revision,
-review and publication. Keep Windows preview status explicit and use the manual
-acceptance steps in RELEASE_NOTES_0.2.0.md. No independent implementation milestone
-remains open after the final source audit; checksums accompany the local archives.
+The maintainer should commit and push the Windows initialization correction, then
+check the new hosted build and tests. Keep Windows preview status explicit and use
+the manual acceptance steps in RELEASE_NOTES_0.2.0.md. Existing delivery archives
+predate this correction; regenerate archives and checksums after the final source
+revision passes its release gates.
 
 ## Compact milestone entry template
 
@@ -111,7 +113,7 @@ remains open after the final source audit; checksums accompany the local archive
 - Dependency review: Mac links only existing system frameworks/libSystem; Linux needs libudev.so.1 and libc.so.6, maximum recorded GLIBC requirement 2.34, no RPATH/RUNPATH; Windows imports KERNEL32.dll, msvcrt.dll and SETUPAPI.dll. This is static dependency evidence, not older-OS runtime validation.
 - Local outputs are under ignored `dist/v0.2.0/`; private compile/test/package evidence remains under `.local-evidence/v0.2.0/`. No device inventories, credentials, build sources or local logs are included in runtime archives.
 
-## Final handoff
+## M7 handoff before the hosted Windows build
 
 - Implemented: portable observations/policy, bounded target/graph revalidation, Linux/macOS/Windows metadata usage adapters, independent unknown method evidence, `assess`/`capabilities` text/JSON, faults and read-only integration tests.
 - Compatibility: `list`, `info`, schema-2 device fields, unknown/null semantics, selector behavior and exit classes preserved. New operation envelope is documented; blocked assessment exits 0 because inspection completed, always with false authorization.
@@ -120,3 +122,12 @@ remains open after the final source audit; checksums accompany the local archive
 - External gates: native Windows including prepared fault execution BLOCKED by platform access/NOT_RUN; hosted CI for this uncommitted change NOT_RUN; real controller/bridge/hotplug/stack matrix NOT_RUN. Owner steps are in ACCEPTANCE_0.2.0.md and RELEASE_NOTES_0.2.0.md.
 - Publication: no staging, commit, push, tag, repository setting or release action performed. Future title `DiskSan v0.2.0 - Read-only Target Assessment`, future tag `v0.2.0`; both require maintainer action.
 - Readiness: WITH_LIMITATIONS for source/candidate review; not READY_TO_PUBLISH. Windows stays preview. Final archive checksums are external assets and do not imply native Windows validation.
+
+## Windows MSVC initialization correction | PASS locally; hosted rerun NOT_RUN | 2026-10-27
+
+- Inspected checkout: `407a5d2` (`feat: add read-only target assessment for v0.2.0`), initially clean. The maintainer's screenshot shows build FAIL before test execution: MSVC C4701 for `last` in `src/platform/windows/usage.c`, promoted to C2220 by warnings-as-errors while building `windows_usage_fault`.
+- Explicitly zero-initialize both extent buffers in `matches_volume`. The second query is conditional; initialization removes the compiler's dependence on correlating `queried` and `rechecked`. First-query failure still retains unknown evidence, closing-query failure/change still rejects the observation, and the handle still closes on every query path. Warning settings and test coverage are unchanged.
+- Existing Windows fault fixtures cover initial-query failure, closing-query failure and changed extents. All-target MinGW Release cross-build PASS from `m9-msvc-init-source`; all 90 maintained-file SHA-256 hashes matched after transfer to the dedicated DiskSan VM directory. Log: `.local-evidence/v0.2.0/vm-logs/m9-windows-build.log`. This is compilation evidence only; Windows executables were not run.
+- macOS build plus `ctest --test-dir build-v020 -C Release -L portable --output-on-failure`: PASS 11/11. Equivalent ASan/UBSan portable run in `build-v020-sanitize`: PASS 11/11. Logs: `.local-evidence/v0.2.0/m9-macos-portable-tests.log` and `m9-macos-sanitize-portable-tests.log`. These checks do not execute the Windows adapter.
+- Documentation checker and `git diff --check`: PASS. Only the Windows initializer and these handoff/acceptance records changed; no maintained files were added or removed.
+- Corrected hosted MSVC build/tests: NOT_RUN pending maintainer commit/push. Native Windows runtime and hardware acceptance remain outstanding. Existing `dist/v0.2.0/` archives/checksums predate this correction and must be regenerated before publication. No commit, push, tag, CI dispatch or release action was performed by the agent.

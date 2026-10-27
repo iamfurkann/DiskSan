@@ -78,7 +78,7 @@ static bool matches_volume(const WCHAR *name, DWORD target, windows_usage *usage
     HANDLE handle = CreateFileW(handle_name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                 NULL, OPEN_EXISTING, 0, NULL);
     if (handle == INVALID_HANDLE_VALUE) { usage->complete = false; return false; }
-    extent_buffer first, last;
+    extent_buffer first = {0}, last = {0};
     bool queried = query_extents(handle, &first);
     bool rechecked = queried && query_extents(handle, &last);
     (void)CloseHandle(handle);
