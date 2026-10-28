@@ -57,7 +57,7 @@ Unknown values stay unknown. Preserve a known zero separately from absence. Keep
 
 ## Device-access boundary
 
-Version 0.2.0 performs metadata queries only. Preserve Linux O_RDONLY and the three-ioctl allowlist. macOS uses registry/description APIs without raw opens. Windows requests read or zero access, never GENERIC_WRITE. Tests must not require root or write device data. New native queries require review of their documented access and side effects.
+Default discovery and assessment perform metadata queries only. Preserve Linux O_RDONLY and the three block-ioctl allowlist. Version 0.3.0 permits one separately audited fixed NVMe Identify Controller request only through explicit `capabilities --probe`; see [the protocol audit](PROTOCOL_QUERY_AUDIT_0.3.0.md). macOS uses registry/description APIs without raw opens. Windows requests read or zero access, never GENERIC_WRITE. Tests must not require root or write device data. New native queries require review of their documented access and side effects.
 
 ## Enforcement and reference generation
 

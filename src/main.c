@@ -23,10 +23,11 @@ static int usage(FILE *out, int code)
           "  disksan list [--all] [--json]\n"
           "  disksan info [--json] [--] <block-device> [--json]\n"
           "  disksan assess [--json] [--] <native-device-selector> [--json]\n"
-          "  disksan capabilities [--json] [--] <native-device-selector> [--json]\n"
+          "  disksan capabilities [--json] [--probe] [--] <native-device-selector> [--json] [--probe]\n"
           "Read-only inventory for Linux, macOS and Windows. No erase operations exist.\n"
           "Default list omits partitions, volumes and snapshots; --all includes them.\n"
           "Assessments and capability observations never authorize erasure.\n"
+          "Protocol queries require explicit capabilities --probe; other commands never probe.\n"
           "Inspection exit 0 includes blocked/review findings; it means inspection succeeded.\n"
           "Examples: disksan list --json; disksan info /dev/sda --json\n"
           "Exit: 0 success, 1 system, 2 usage, 3 invalid target, 4 permission.\n", out);
@@ -52,11 +53,12 @@ static int run_main(int argc, char **argv)
     bool inspect = assess || capabilities;
     if (!list && !info && !inspect) return usage(stderr, 2);
     if (inspect && argc == 3 && strcmp(argv[2], "--help") == 0) return usage(stdout, 0);
-    bool json = false, all = false, end_options = false;
+    bool json = false, all = false, probe = false, end_options = false;
     const char *selector = NULL;
     for (int i = 2; i < argc; ++i) {
         if (!end_options && strcmp(argv[i], "--") == 0) { end_options = true; continue; }
         if (!end_options && strcmp(argv[i], "--json") == 0 && !json) json = true;
+        else if (!end_options && strcmp(argv[i], "--probe") == 0 && capabilities && !probe) probe = true;
         else if (!end_options && strcmp(argv[i], "--all") == 0 && list && !all) all = true;
         else if ((info || inspect) && !selector && (end_options || argv[i][0] != '-')) selector = argv[i];
         else return usage(stderr, 2);
@@ -65,8 +67,10 @@ static int run_main(int argc, char **argv)
     ds_inventory inventory = {0};
     ds_assessment assessment;
     char error[512] = {0};
-    int result = inspect ? ds_assess_target(&inventory, &assessment, selector, error, sizeof(error)) :
-                           ds_discover(&inventory, selector, error, sizeof(error));
+    int result;
+    if (probe) result = ds_probe_capabilities_target(&inventory, &assessment, selector, error, sizeof(error));
+    else if (inspect) result = ds_assess_target(&inventory, &assessment, selector, error, sizeof(error));
+    else result = ds_discover(&inventory, selector, error, sizeof(error));
     if (result != 0) {
         fputs("DiskSan: ", stderr);
         ds_terminal_string(stderr, error, sizeof(error));

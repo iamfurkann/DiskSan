@@ -37,6 +37,25 @@ typedef enum {
 typedef enum {
     DS_CAP_UNKNOWN, DS_CAP_SUPPORTED, DS_CAP_UNSUPPORTED, DS_CAP_UNAVAILABLE
 } ds_cap_state;
+/** @brief Query outcome is independent of advertised method support and method access. */
+typedef enum {
+    DS_PROBE_NOT_REQUESTED, DS_PROBE_UNAVAILABLE, DS_PROBE_COMPLETE, DS_PROBE_INVALID_RESPONSE
+} ds_probe_status;
+/** @brief Static provider identities expose no native paths or untrusted controller text. */
+typedef enum { DS_PROVIDER_NONE, DS_PROVIDER_LINUX_NVME, DS_PROVIDER_WINDOWS_NVME } ds_probe_provider;
+/** @brief Stable reasons distinguish unavailable inspection from unsupported hardware. */
+typedef enum {
+    DS_PROBE_REASON_NONE, DS_PROBE_PLATFORM, DS_PROBE_TRANSPORT, DS_PROBE_IDENTITY,
+    DS_PROBE_PERMISSION, DS_PROBE_QUERY_FAILED, DS_PROBE_NATIVE_API,
+    DS_PROBE_BAD_RESPONSE, DS_PROBE_VERSION
+} ds_probe_reason;
+/** @brief Own a compact query receipt with no raw response or reusable native handle. */
+typedef struct {
+    ds_probe_status status; /**< @brief Zero means no protocol query was requested. */
+    bool performed; /**< @brief True only when the fixed native query API was invoked, even if it failed. */
+    ds_probe_provider provider; /**< @brief Chosen native mechanism, or none when unavailable. */
+    ds_probe_reason reason; /**< @brief Static outcome code without private identifiers. */
+} ds_probe_report;
 /** @brief Policy severity is distinct from process exit status. */
 typedef enum { DS_SEVERITY_INFO, DS_SEVERITY_REVIEW, DS_SEVERITY_BLOCK } ds_severity;
 /** @brief Inspection-only outcomes; none permits a future destructive action. */
@@ -77,6 +96,7 @@ typedef struct {
     ds_finding findings[DS_ASSESS_LIMIT]; /**< @brief Derived findings in stable order. */
     size_t finding_count; /**< @brief Initialized findings; reset on every evaluation. */
     ds_inspection_status status; /**< @brief Content status; never authorization. */
+    ds_probe_report probe; /**< @brief Optional query receipt; omitted from default output. */
     bool failed; /**< @brief Sticky invalid/overflow input prevents evaluation success. */
 } ds_assessment;
 /**

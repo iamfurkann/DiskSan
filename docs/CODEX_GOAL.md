@@ -1,50 +1,33 @@
-# Codex Goal - DiskSan v0.2.0
+# Codex Goal - DiskSan v0.3.0
 
-> Copy the **single-line `/goal` command** below into a Codex thread with Goals support. The Goal is a **thread-level objective**: placing this file in the repository does **not** automatically activate it. `AGENTS.md` provides standing repo instructions; this file provides the completion target.
-
-## Before activating
-
-1. Place `AGENTS.md` at the DiskSan repository root and install the accompanying `docs/` files according to `docs/CODEX_WORKFLOW.md`.
-2. Open the actual DiskSan project in Codex. Ensure the working directory includes `AGENTS.md` and the version specification.
-3. Inspect the current checkout. Do not assume the baseline SHA is still current. If there are unrelated user changes, preserve them.
-4. Check `codex --version` when using the CLI. Goals require a Codex build supporting the feature (documented from CLI 0.128.0). The app or hosted environment may expose it differently. If `/goal` is unavailable, use the ordinary prompt below instead.
+The following is a *new* objective. Do not reuse the old v0.2.0 `/goal`; that milestone is published. This file is a human launch document; placing it in `docs` does not by itself activate a thread-level goal.
 
 ## Ready-to-paste `/goal`
 
-```text
-/goal Complete DiskSan v0.2.0 as a safe, evidence-based, read-only target assessment release candidate according to docs/specs/v0.2.0.md, using the actual current repository state and AGENTS.md. Establish and record a tested baseline; implement portable policy/findings, identity revalidation, conservative usage/topology checks, read-only capability evidence and a documented CLI/JSON surface; maintain backward compatibility with v0.1.1. Work through verifiable milestones, run relevant tests and sanitizers, update docs/PROGRESS.md after evidenced milestones, resolve failures, and continue with the next independent task without routine approval requests. A capability observation, successful inspection, or saved snapshot must never authorize a future erase. No erase/sanitize/format/discard/mount-modifying/device-data-writing code or real-device destructive tests. Preserve existing user changes. Never commit, push, tag, publish a GitHub release, alter repository settings, or report unrun CI/native Windows/hardware checks as passed. Completion requires implemented code, passing accessible acceptance/regression tests, an audited read-only boundary, accurate documentation/manifests, and a final evidence-based handoff. If external platform access or a genuine blocker remains, finish independent reachable work and report precisely what is BLOCKED/NOT_RUN and which maintainer action would unblock it; do not invent a result.
-```
-
-## If your Codex interface does not support Goals
-
-Paste the following as an ordinary initial prompt. It does not create a persistent Goal, so use `docs/PROGRESS.md` for handoffs.
+Copy the one line inside the code block, starting with `/goal`, into a Codex thread if that interface supports Goals:
 
 ```text
-Implement DiskSan v0.2.0 in the currently open repository. Read AGENTS.md and docs/specs/v0.2.0.md; consult docs/BASELINE_0.1.1.md as historical evidence, but inspect the live working tree before assuming facts. Follow the milestone structure in docs/PROGRESS.md. Carry out the authorized engineering work, not just a plan: design, implement, test, fix regressions, update documentation, and produce a factual handoff. Work independently within the safe read-only boundary; preserve existing behavior and user changes. Do not run destructive disk operations. Do not commit, push, tag or publish. Record each verified milestone and distinguish PASS/FAIL/BLOCKED/NOT_RUN. Complete all reachable work and identify external acceptance gates accurately.
+/goal Implement DiskSan v0.3.0 Native Protocol Capability Discovery from the actual current repository checkout according to AGENTS.md, docs/specs/v0.3.0.md and docs/PROTOCOL_QUERY_AUDIT_0.3.0.md. First inspect HEAD, working-tree changes, the published v0.2.0 baseline and existing tests; preserve user work. Add a closed, precisely audited and explicitly opt-in read-only `capabilities <selector> --probe` path, with genuine capability evidence from only verified fixed NVMe Identify Controller query mechanisms, primary Linux and conditional Windows; do not invent ATA/SCSI/macOS support or use generic pass-through. Preserve default non-probing list/info/assess/capabilities behavior, schema-2 compatibility, independent capability dimensions, non-atomic identity limits and literal erase_authorized=false. Independently design, implement, test and repair coherent milestones M0-M7, including all forbidden-command/flag tests, bounded response decoding, target-revalidation and handle/error cleanup, platform tests, sanitizers, documentation/manifest, and packaging checks. Keep docs/PROGRESS_0.3.0.md current with actual evidence and distinguish PASS/FAIL/SKIP/BLOCKED/NOT_RUN; do not paste private identifiers into public files. Continue reachable independent engineering work without routine confirmation requests, but never read/write storage user-data sectors, issue any state-changing protocol command, elevate privilege for tests, auto-probe physical hardware, or stage/commit/push/tag/release/change repository settings without new authorization. If platform API or physical device access is unavailable, implement safe truthful fallbacks, leave unsupported claims UNKNOWN/UNAVAILABLE, and report exact blockers. Finish with an evidence-based candidate handoff, not an unsupported release or v1.0.0 claim.
 ```
 
-## Goal controls (where supported)
+## Normal prompt alternative (when `/goal` is not supported)
 
 ```text
-/goal          # View current goal
-/goal pause    # Pause an active goal
-/goal resume   # Resume a paused goal
-/goal clear    # Clear the goal from the thread
+Continue development of DiskSan from its live repository state. Implement v0.3.0 as described in AGENTS.md, docs/specs/v0.3.0.md and docs/PROTOCOL_QUERY_AUDIT_0.3.0.md. First inspect the actual branch, HEAD, user edits and current tests. Preserve existing v0.2.0 behavior and historical documents. Execute M0-M7 with real implementation and targeted/full tests, not just a plan. Add opt-in, strictly allowlisted read-only native NVMe capability discovery where safely supported; leave unverified ATA/SCSI/macOS/bridge cases unknown or unavailable. Never use destructive commands or automatic live-device probing. Update docs/PROGRESS_0.3.0.md with verified results, skips and limitations. Do not stage, commit, push, tag, publish releases or change repository settings. Give a concise technical report listing implemented code, exact tests, unresolved physical/native gates and the proposed next safe step.
 ```
 
-The Goal belongs to the **current Codex thread**, not to the GitHub repository and not to every new chat. It does not guarantee infinite execution: budgets, interruptions and genuine blockers can stop progress. A fresh thread should receive a new `/goal` or ordinary prompt, after reading `docs/PROGRESS.md`.
+## Optional short session continuation
 
-## Progress and completion semantics
+If your thread context is reset, reopen the actual repo and send:
 
-- **PASS**: the specific criterion was observed and checked with a concrete command/fixture/log.
-- **FAIL**: an attempted criterion failed; record the failure and fix or explain.
-- **NOT_RUN**: no test execution evidence exists.
-- **BLOCKED**: the criterion depends on inaccessible hardware, permissions, a missing toolchain or maintainer action.
-- **SKIP**: a test explicitly skipped and why; a skip is not a pass.
-- **IMPLEMENTATION_COMPLETE**: every reachable requirement is implemented and verified without an open critical risk; remaining external gates are reported, not falsified.
-- **READY_TO_PUBLISH**: separate maintainer determination after required external gates. The Goal may finish with `IMPLEMENTATION_COMPLETE` and a `NOT_READY_TO_PUBLISH` handoff.
+```text
+Continue DiskSan v0.3.0 from the current checkout. Read AGENTS.md, the next incomplete milestone in docs/PROGRESS_0.3.0.md, its relevant sections in docs/specs/v0.3.0.md and the native query audit. Check git status and existing user edits before changes. Complete and test the next reachable milestone, update actual evidence, and continue as permitted; do not reset to v0.2.0 or publish anything.
+```
 
-## Sources and rationale
+## Operational notes
 
-- OpenAI, **Using Goals in Codex**: <https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex>
-- OpenAI, **Rethinking skills and prompts for GPT-6 Astra**: <https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra>
+- Some Codex versions/clients may not provide `/goal`; use the ordinary prompt instead. Do not assume an unrecognized slash command enabled a persistent goal.
+- The goal is associated with the current thread if supported; it is not automatically global across projects.
+- `AGENTS.md` should be at the repository root for standing instructions. The version spec and query audit contain functional requirements, and `PROGRESS_0.3.0.md` carries persistent facts.
+- Actual build/test/CI evidence beats any status claim in old plans. Ask the maintainer only when new privileges, hardware, authorization, missing dependency or substantial scope change is required.
+- Completing implementation is not permission to run dangerous commands or create a GitHub Release.

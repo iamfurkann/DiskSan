@@ -211,9 +211,9 @@ void ds_json_string(FILE *out, const char *text);
 /**
  * @brief Serialize one schema-2 inventory record for use inside an operation envelope.
  * @param[in,out] out Non-null writable stream; caller handles flush and stream errors.
- * @param[in] device Non-null borrowed initialized record; ownership is unchanged.
+ * @param[in] d Non-null borrowed initialized record; ownership is unchanged.
  */
-void ds_json_device(FILE *out, const ds_device *device);
+void ds_json_device(FILE *out, const ds_device *d);
 /**
  * @brief Write ASCII-safe metadata with bounded display width.
  * @param[in,out] out Non-null writable stream; caller checks stream errors.

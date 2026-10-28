@@ -12,7 +12,7 @@ ctest --test-dir build-sanitize --output-on-failure -V
 python3 tools/check_documentation.py
 ```
 
-GCC/Clang use Wall, Wextra, Wpedantic, Wconversion, Wshadow, and Werror. MSVC uses C17 and W4/WX; native validation is pending. Python 3.9 or newer runs the test scripts. See [CI](CI.md) for runner definitions and separate portable/fault/integration/packaging gates.
+GCC/Clang use Wall, Wextra, Wpedantic, Wconversion, Wshadow, and Werror. MSVC uses C17 and W4/WX; native 0.3.0 validation is pending. Tagged 0.2.0 CI is historical evidence only. Python 3.9 or newer runs the test scripts. See [CI](CI.md) for runner definitions and separate portable/fault/integration/packaging gates.
 
 ## Existing test groups retained in 0.2.0
 
@@ -36,7 +36,7 @@ Fault wrappers never open actual block data. Core allocation substitution is lim
 
 ## Evidence and scope
 
-The [0.1.0 report](WORK_REPORT.md) preserves historical results. See [0.1.1 validation](WORK_REPORT_0.1.1.md) for baseline results; [current progress](PROGRESS.md) records 0.2.0 compiler/build results, skips, limitations, and release gates. A checked-in workflow is not a successful hosted run. Windows buffer fixtures and MinGW cross-compilation are not native Windows execution.
+The [0.1.0 report](WORK_REPORT.md) preserves historical results. See [0.1.1 validation](WORK_REPORT_0.1.1.md) for baseline results; [0.2.0 progress](PROGRESS.md) preserves that development record. [Current 0.3.0 progress](PROGRESS_0.3.0.md) records the active compiler/build results, skips, limitations and release gates. A checked-in workflow is not a successful hosted run. Windows buffer fixtures and MinGW cross-compilation are not native Windows execution.
 
 Mac tests use read-only diskutil only as a reference; production uses registry/Disk Arbitration APIs. Three measured reference topology changes may skip the comparison class; a stable mismatch, invalid JSON, or API failure fails. Other integration assertions retain their failure semantics. Linux missing device/by-id prerequisites are explicit skips. CLI output-error tests pass an inherited read-only file handle on each OS; they use no Unix-only preexec or invalid-fd assumption, but Windows execution still needs confirmation.
 
@@ -46,7 +46,7 @@ Physical USB/SATA/NVMe/SCSI, physical hotplug, multi-device APFS/RAID/multipath,
 
 Tests never invoke sudo, mount, format, or erasure. They may write ordinary fixture files within a unique temporary directory. Set TMPDIR inside an isolated workspace if desired. Linux dependencies can be extracted into a dedicated project directory; CI dependency installation affects only its disposable runner.
 
-Transfer source through an explicit NUL-separated manifest, without --delete. Compare Mac md5 and Linux md5sum for every selected file before building, rejecting empty hashes, failed commands, missing files, and mismatches. These hashes establish equality, not authenticity. Package SHA-256 sums cover final archive bytes. Raw inventory and machine-specific logs remain private and are not archive assets.
+Transfer source through an explicit NUL-separated manifest, without --delete. Compare SHA-256 values for every selected file before building, rejecting empty hashes, failed commands, missing files, and mismatches. These hashes establish equality, not authenticity. Package SHA-256 sums cover final archive bytes. Raw inventory and machine-specific logs remain private and are not archive assets.
 
 Optional `doxygen Doxyfile` renders API documentation with warnings as errors. The Python documentation gate checks this repository's conventional C declarations and Python AST docstrings, not arbitrary C syntax or natural-language correctness. Workflow YAML needs its own syntax check. Review remains necessary.
 
@@ -74,3 +74,53 @@ macOS substitutions compile in a separate object, leaving production APIs intact
 The current 26,147-assertion Linux count includes byte-by-byte fixture construction and is
 not a count of independent scenarios. Package tests are disposable smoke artifacts;
 regenerate final release assets after documentation changes.
+
+## Protocol tests in 0.3.0
+
+| CTest group | Coverage |
+| --- | --- |
+| protocol_decoder | All short lengths 0..4095, exact/oversized/unaligned/null data, reviewed versions, endian fields, reserved bits, support combinations and deterministic arbitrary buffers |
+| protocol_unavailable | Actual no-query platform adapter, cleared response facts, all 24 unknown dimensions and forbidden request kinds |
+| probe_target_window | Explicit query ordering inside selection/reselection, failed receipt rejection, changed identity, fatal cleanup and default zero-query path |
+| probe_cli | Option grammar, mutation/raw-command rejection, no environment opt-in, independent evidence, false authorization, output errors and actual disposable invalid selectors |
+| linux_protocol_query | Actual ioctl request bytes, fixed opcode/CNS/size/timeout, zero unused fields, initialized buffer, invalid enum rejection and no retry |
+| linux_protocol | Actual Linux provider/mapping/normalizer with synthetic udev/open/stat/ioctl/close; ancestry, generation, node/descriptor swaps, NSID/CNTLID mismatch, permissions, errors and ownership |
+
+The native protocol fixtures replace every native boundary before execution and
+never open real controllers. Existing metadata integration tests do not use
+`--probe`. Standard CTest and CI perform no physical protocol acceptance. The
+Linux ioctl has no returned byte count; short-size decoder tests validate the
+portable parser, not a nonexistent kernel returned-length field. Zero-filled and
+malformed native responses are tested separately. Exact reviewed source snapshots
+and compiler results are in [progress](PROGRESS_0.3.0.md); the
+[test matrix](PROTOCOL_TEST_MATRIX_0.3.0.md) distinguishes unexecuted hardware gates.
+
+## Manual protocol acceptance
+
+This procedure is a separate maintainer action, never an automated test:
+
+1. Use a non-system test device that you deliberately select from an ordinary
+   `disksan list --all --json` inventory. Do not select a boot disk for convenience,
+   create storage layers, alter mounts or change permissions to satisfy the test.
+2. Keep the exact binary/source hash, OS/kernel, relevant driver/header version
+   and redacted device class privately. Confirm a direct PCI NVMe namespace on
+   Linux, with generation and controller association visible. Other transports
+   and platforms should decline the query.
+3. Run `disksan capabilities --json --probe <selected-test-namespace>` as the
+   ordinary user. There is no sudo, writable-handle, alternate-node or retry
+   fallback. Permission denial is a valid unavailable result, not a test to bypass.
+4. Require exit 0 plus complete JSON for completed inspections. Examine the
+   `probe` receipt, support-field provenance and independent unknown dimensions.
+   A changed target must fail without a success payload. Always require false
+   authorization, false atomic/future guarantees and end-of-observation expiry.
+5. If collecting a syscall trace, store it privately, exclude raw buffer/serial
+   dumps and confirm only the audited read-only controller request. Match the
+   tested binary with the source audit. Do not infer absence of side effects
+   merely from before/after metadata or a successful Identify.
+6. Record PASS/FAIL/UNAVAILABLE with scope, preserving NOT_RUN for other hardware.
+   Do not publish raw inventory, Identify bytes, controller strings or local paths.
+
+macOS and Windows candidates currently return a no-query unavailable receipt.
+Their discovery/assessment tests remain useful, but they cannot count as native
+protocol-query tests. Native Windows MSVC validation of this source must precede
+any future WN-01 provider activation; cross-compilation is insufficient.

@@ -4,9 +4,9 @@ The same source version produces three native archives. Each contains the platfo
 
 | Target | Filename | Status |
 |---|---|---|
-| macOS arm64 | disksan-0.2.0-macos-arm64.zip | Candidate validated on a real Apple Silicon Mac |
-| Linux x86-64 | disksan-0.2.0-linux-x86_64.tar.gz | Candidate validated on Debian 13 |
-| Windows x86-64 | disksan-0.2.0-windows-x86_64.zip | Preview awaiting native Windows acceptance |
+| macOS arm64 | disksan-0.3.0-macos-arm64.zip | Candidate validated on a real Apple Silicon Mac |
+| Linux x86-64 | disksan-0.3.0-linux-x86_64.tar.gz | Candidate validated on Debian 13 |
+| Windows x86-64 | disksan-0.3.0-windows-x86_64.zip | Preview awaiting native Windows acceptance |
 
 CPack derives the version from PROJECT_VERSION and architecture from the actual CMake target (including explicit macOS architectures and MSVC x64). The Linux binary requires system libudev.so.1 and glibc 2.34 or newer; Debian 13 is the tested environment, not a guarantee for every distribution. The Mac archive contains arm64 only. macOS 12.0 is the deployment target; older supported OS versions have not been individually tested. Windows ARM64 is not covered.
 
@@ -29,7 +29,7 @@ cmake --build build-windows
 cpack --config build-windows/CPackConfig.cmake -C Release -B dist
 ```
 
-Do not run Windows test executables on the cross-build host. Native acceptance remains a separate step.
+Do not run Windows test executables on the cross-build host. Native acceptance remains a separate step. This build compiles the explicit unavailable protocol adapter; it does not enable Windows Identify querying.
 
 ## Verify packages
 
@@ -69,10 +69,24 @@ The canonical repository is [iamfurkann/DiskSan](https://github.com/iamfurkann/D
 
 Packages include the repository's [Apache License 2.0](../LICENSE). Windows/macOS signing and macOS notarization remain release decisions. Current local CLI archives are not presented as signed/notarized distribution packages. See [testing](TESTING.md) and the [roadmap](ROADMAP.md) for validation limits.
 
-## 0.2.0 release handoff
+## 0.3.0 release handoff
 
-The prepared title is `DiskSan v0.2.0 - Read-only Target Assessment`; the proposed tag is `v0.2.0`. Neither is created by preparation. Review the [release notes](RELEASE_NOTES_0.2.0.md), [validation report](PROGRESS.md), and CI results on the actual committed revision before publishing. No final commit hash is assumed for an unstaged change set.
+The prepared title is `DiskSan v0.3.0 - Audited Read-only Capability Discovery`; the proposed tag is `v0.3.0`. Neither is created by preparation. Review the [release notes](RELEASE_NOTES_0.3.0.md), [validation report](PROGRESS.md), and CI results on the actual committed revision before publishing. No final commit hash is assumed for an unstaged change set.
 
 The `packaging_smoke` test invokes CPack into a fresh directory, checks the exact runtime/documentation allowlist and tested binary bytes, then runs the relocated executable with `--version`/`--help`. On Linux it removes LD_LIBRARY_PATH and requires an executable without a private build RPATH. The Windows cross archive is inspected with `--no-run`; only native Windows execution can close its preview gate. New artifacts include SECURITY.md and current public release/CI documentation. Source, logs, raw inventories, local paths, credentials, and build files are not runtime assets.
 
 Generate SHA256SUMS only after the final archives are produced. If any packaged documentation or executable changes, rebuild that platform package and regenerate checksums. Validate the macOS executable bit, Linux runtime requirements, and Windows PE architecture/imports. Archives are unsigned and not notarized; old-OS compatibility has not been separately verified. Keep the three platform archives plus SHA256SUMS together in the release assets; GitHub-generated source archives are separate.
+
+## Candidate provider coverage
+
+The Linux archive enables only the fixed audited NVMe Identify Controller path
+behind explicit `capabilities --probe`. macOS and Windows packages include the
+same CLI/receipt contract with an unavailable protocol provider. No archive
+provides ATA/SCSI/USB pass-through, a destructive backend or automatic probing.
+Physical query acceptance is NOT_RUN unless separately recorded for deliberately
+selected non-system hardware. See [current evidence](PROGRESS_0.3.0.md).
+
+Candidate assets are generated locally. Their existence does not mean the dirty
+working tree was committed, tagged, signed or published. Final hosted CI must
+match the maintainer's reviewed commit; release hashes cover the final archive
+bytes and are regenerated after documentation changes.

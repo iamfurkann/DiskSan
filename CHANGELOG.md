@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - Audited Read-only Capability Discovery (unreleased)
+
+- Add explicit `capabilities <selector> --probe` without changing default metadata-only commands or schema-2 inventory contracts.
+- Add one fixed Linux NVMe Identify Controller query for revalidated direct PCI namespace/controller mappings, with read-only access, no retries and bounded responses.
+- Decode reviewed NVMe version and SANICAP fields into three independent support states; retain unknown access/applicability/passthrough and truthful unavailable/error reasons.
+- Add opt-in receipts, controller-association revalidation, decoder/CLI/native request/fault fixtures and unsupported-platform adapter tests.
+- Keep Windows/macOS/ATA/SCSI/USB protocol providers unavailable; no destructive command, raw pass-through or storage user-data access is introduced.
+- Track actual candidate tests and external hardware/CI gates in `docs/PROGRESS_0.3.0.md`; historical entries below retain their preparation-state wording.
+
 ## 0.2.0 - Read-only Target Assessment (unreleased)
 
 - Add `assess` and `capabilities` with a separate schema-2 envelope, stable policy

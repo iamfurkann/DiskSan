@@ -1,10 +1,10 @@
 # Security policy
 
-DiskSan 0.2.0 is a read-only metadata discovery and target-assessment tool. It does not erase, sanitize, format, discard, modify partitions, or certify erasure. Observed identities and snapshots never authorize destructive operations.
+DiskSan 0.3.0 is a read-only discovery, target-assessment and opt-in controller-capability tool. It does not erase, sanitize, format, discard, modify partitions, or certify erasure. Observed identities and snapshots never authorize destructive operations.
 
 ## Supported versions
 
-Security and reliability fixes target the latest maintained source and published release. Version 0.2.0 is an unpublished development change set until its maintainer publishes it. Older development builds should be replaced by the latest published version; no long-term support promise is made. Native Windows acceptance remains pending.
+Security and reliability fixes target the latest maintained source and published release. Version 0.3.0 is a development candidate until its maintainer publishes it; 0.2.0 is the historical published baseline. Older development builds should be replaced by the latest published version; no long-term support promise is made. Native Windows acceptance remains pending.
 
 ## Reporting a vulnerability
 
@@ -22,3 +22,20 @@ only. Output may contain private device identifiers and paths; redact before
 sharing. Linux proc/sysfs reads validate descriptor type and filesystem before
 reading, and Windows volume handles request zero desired access. See the
 [read-only query audit](docs/READ_ONLY_AUDIT_0.2.0.md) for exact limits and gaps.
+
+## Protocol-query boundary in 0.3.0
+
+Only explicit `capabilities --probe` can select the Linux fixed Identify Controller
+provider. A protocol family or read-only descriptor alone is not a safety proof:
+the exact request, constants, transfer direction, ancestry, length and lifecycle
+are audited together in [the protocol allowlist](docs/PROTOCOL_QUERY_AUDIT_0.3.0.md).
+Unknown request kinds are rejected before native access. There is no raw-command
+interface, writable-handle retry, elevation or external-tool fallback.
+
+The provider reads controller metadata, never storage user-data sectors. It
+retains only bounded numeric fields and static diagnostic reasons. The existing
+inventory can still contain private identifiers; redact complete CLI output
+before sharing. Failed, unrecognized or unassociated replies establish no method
+support. A successful Identify response does not establish sanitization access,
+scope, media guarantees or authorization. Tests use synthetic native boundaries;
+physical protocol acceptance requires explicit maintainer-selected hardware.

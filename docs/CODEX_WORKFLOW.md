@@ -1,94 +1,86 @@
-# Codex workflow for DiskSan v0.2.0
+# Operating Codex for DiskSan v0.3.0
 
-This guide installs the accompanying documents into an **existing** DiskSan checkout. It does not replace code, automatically publish a release, or activate a Goal.
+## Setup - merge; do not replace the project
 
-## 1. File placement
+Install `AGENTS.md` at the DiskSan repository root and each file in this kit's `docs` folder into the matching existing `DiskSan/docs` location. Keep the nested `docs/specs/v0.3.0.md` path. Do not create `docs/docs` and do not remove any existing 0.2.0 files. Files named `docs/CODEX_GOAL.md`, `docs/CODEX_WORKFLOW.md` and `AGENTS.md` replace the prior v0.2.0 task-oriented instructions after reviewing local custom edits. The other newly versioned files are additive.
 
-Place the files in the existing repository at these paths:
-
-```text
+```
 DiskSan/
-+-- AGENTS.md                      # Standing instructions, auto-read by supported Codex tools
-+-- docs/
-    +-- BASELINE_0.1.1.md          # Inspected historical source and validation state
-    +-- CODEX_GOAL.md              # Copy/paste Goal and ordinary fallback prompt
-    +-- CODEX_WORKFLOW.md          # This operator guide
-    +-- FILE_MANIFEST.txt          # Updated to include the new maintained files
-    +-- PROGRESS.md                # Evidence-backed work and handoff journal
-    +-- specs/
-        +-- v0.2.0.md              # Full version implementation specification
+|-- AGENTS.md                         # Updated stable instructions
+|-- CMakeLists.txt
+|-- src/
+|-- include/
+|-- tests/
+|-- docs/
+|   |-- CODEX_GOAL.md                 # Updated new objective
+|   |-- CODEX_WORKFLOW.md             # Updated operator guidance
+|   |-- FILE_MANIFEST.txt             # Merge/check current actual files
+|   |-- PROGRESS.md                   # Retain old v0.2.0 history
+|   |-- BASELINE_0.2.0.md
+|   |-- PROGRESS_0.3.0.md
+|   |-- PROTOCOL_QUERY_AUDIT_0.3.0.md
+|   |-- PROTOCOL_TEST_MATRIX_0.3.0.md
+|   |-- ACCEPTANCE_0.3.0.md
+|   |-- RELEASE_CHECKLIST_0.3.0.md
+|   |-- ROADMAP_TO_1.0.0.md
+|   `-- specs/
+|       |-- v0.2.0.md                # Retain previous spec
+|       `-- v0.3.0.md                # New authoritative spec
+`-- tools/
 ```
 
-**Merge into the real checkout** rather than replacing the project. Compare the included `FILE_MANIFEST.txt` with the actual tree; if the tree has changed, merge the added entries into the live manifest instead of deleting existing tracked paths. Do not copy older esdumanOS directory paths or other project state. `AGENTS.md` is a standing instruction document, not a complete specification.
+## Preflight
 
-### Expected separation
-
-| Document | Read frequency | Purpose |
-| --- | --- | --- |
-| `AGENTS.md` | Automatically/on every relevant Codex session | Stable safety, permissions, standards, verification rules |
-| `docs/specs/v0.2.0.md` | Relevant sections per milestone | Functional scope, contracts, acceptance tests |
-| `docs/BASELINE_0.1.1.md` | Initial baseline, or when compatibility matters | Reference to existing behavior and unverified claims |
-| `docs/PROGRESS.md` | Open at startup; update after verified milestones | Handoff and implementation evidence |
-| `docs/CODEX_GOAL.md` | At thread creation and if goal is reset | Persistent objective and fallback prompt |
-| `docs/CODEX_WORKFLOW.md` | Setup/handoff only | Human operation of the workflow |
-
-Avoid asking Codex to reread every entire document on each small edit. Read the relevant sections and source files. The source tree and executed tests override historical assumptions in this kit.
-
-## 2. Start Codex
-
-1. Open the DiskSan checkout and verify the current working tree (`git status`, branch, current commit), CMake version and reachable Linux/macOS/Windows toolchains.
-2. Run the baseline tests that can actually execute on the current host. Do not describe pending Windows or hosted CI runs as passed.
-3. Open a new Codex thread with **GPT-6 Astra / Very High** for architecture and complex safety decisions. A lower reasoning setting is fine for isolated documentation/build tasks; correctness and verification still govern.
-4. If the Codex environment supports `/goal`, copy the one-line command from `docs/CODEX_GOAL.md`. Otherwise use the ordinary fallback prompt there.
-5. Let Codex work through the defined milestones, finishing and testing a cohesive unit before starting unrelated implementation.
-6. Retain maintainer authority over Git commits, pushes, tags, GitHub Releases and repository settings.
-
-The Codex `/goal` command is **a UI/CLI action entered in the thread**. Simply creating a `GOALS.md` or pasting a goal inside a code file will not activate it. Check `codex --version` in the CLI; availability depends on the Codex build/interface, not on the chosen reasoning setting.
-
-## 3. Working cycle and token efficiency
-
-For each milestone:
-
-1. Identify the minimal relevant specification sections, existing modules, and tests.
-2. Make the smallest coherent cross-module change that solves the problem, including necessary tests.
-3. Run targeted tests during iteration; run full native regression at integration gates and the final candidate review.
-4. If tests fail, inspect diagnostic sections and fix root causes; keep full logs privately when appropriate instead of repeatedly placing long logs into model context.
-5. Record changed files, proof of test execution, known risks, and the next independent work item in `docs/PROGRESS.md`.
-6. Continue to the next reachable milestone if permitted. Stop or mark a specific part blocked when additional external access or a genuine product decision is required.
-
-Do not spawn parallel agents to edit overlapping core API and header files concurrently. Independent documentation review, test-design research or platform research may be parallelized, then reconciled in one implementation thread.
-
-## 4. Platform validation
-
-- **Linux:** native CMake/CTest, appropriate read-only libudev/sysfs probes, negative fixtures; retain the existing closed ioctl allowlist unless new read-only queries are individually documented and verified.
-- **macOS:** use native IOKit/Disk Arbitration and actual test evidence on Apple Silicon; never presume Darwin host support from portable tests.
-- **Windows:** native MSVC compile and execution only when a suitable runner or Windows computer is reachable; MinGW cross-build does **not** count as native-runtime acceptance.
-- **Hardware:** no actual disk writes or destructive capability probes. Fixture-only NVMe/ATA/USB support must be labeled synthetic, not physical verification.
-- **CI:** inspect the result for the exact commit; a checked-in `.github/workflows/ci.yml` file is not a green run.
-
-## 5. Documentation and source manifest
-
-The repository has `tools/check_documentation.py`, which checks a sorted, complete `docs/FILE_MANIFEST.txt` and file-level source conventions. After placing this kit into a checkout, ensure the new paths are included, then run:
+From the repository root:
 
 ```sh
+git status --short
+git branch --show-current
+git rev-parse HEAD
 python3 tools/check_documentation.py
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release
-ctest --test-dir build -C Release --output-on-failure
+cmake -S . -B build-v030-baseline -DCMAKE_BUILD_TYPE=Release
+cmake --build build-v030-baseline --config Release
+ctest --test-dir build-v030-baseline -C Release --output-on-failure
 ```
 
-The actual project may require host-specific dependencies. These commands are not claims of execution. Use suitable separate build directories for sanitizers; do not force unsupported sanitizer configurations.
+If the documentation checker reports a manifest discrepancy, reconcile `docs/FILE_MANIFEST.txt` with the *live* maintained source files; do not delete newer source just to match this reference manifest. If the checkout has newer commits, inspect differences rather than reset. The v0.2.0 release SHA is a historical reference only.
 
-## 6. Session handoff and final release gate
+Windows multi-config builds should use `-C Release`. Linux requires development libudev/pkg-config, and tests require Python. Run the sanitizer build on actual supported hosts. Avoid blanket `ctest` skips and retry workarounds that hide real failures.
 
-At the end of a completed milestone or when context is becoming large, update `docs/PROGRESS.md` with the working tree SHA/status, decisions, files, executed commands with result and skip reason, next task and known blockers. A new thread should inspect that file plus the active spec section, rather than reconstructing the project history from chat messages.
+## Start the implementation goal
 
-At the end of v0.2.0 implementation, request a separate critical review for unresolved identity races, read-only query safety, logical vs physical target confusion, JSON/schema regressions, native API cleanup and error propagation. The review is not a substitute for running tests.
+Use GPT-6 Astra with a high thinking effort for native query safety and parser contracts. In a Codex interface exposing Goals, copy only the single line in the `Ready-to-paste /goal` section of `docs/CODEX_GOAL.md`, not the whole Markdown file or merely its path. If the client does not support Goals, send the ordinary fallback prompt.
 
-**Owner handoff:** Codex produces a tested candidate and accurate release notes; the maintainer reviews diffs and CI/hardware evidence and decides on versioning, commit, push, tag and publication. `IMPLEMENTATION_COMPLETE` is not proof of release readiness.
+Do not tell Codex to begin by downloading a tagged release ZIP: the local checkout is the source of changes. Do not let a parallel agent edit the same public header/assessment model as the primary implementation thread. Parallel research or independent fixture drafting is fine only if the changes are reconciled.
 
-## 7. Project-specific historical constraints
+## Working method / token use
 
-Previous DiskSan work used a Mac source workspace and an isolated Linux VM, with selected-file transfer and hash verification. If Codex actually uses that path, it should discover the current directories, transfer only relevant files and compare source hashes before building. It must not assume paths belonging to esdumanOS, use `rsync --delete` on unrelated folders, or change system-wide package configuration unnecessarily.
+For each milestone: read its relevant version-spec section, the query-audit row and affected source/tests; implement the smallest cohesive change; run focused tests; fix root causes; then run wider regression before marking PASS. Preserve the old `docs/PROGRESS.md` untouched and update only `docs/PROGRESS_0.3.0.md` with source SHA, commands, actual results and skipped external checks. Do not flood context with huge CI logs or complete inventories.
 
-Source references: <https://github.com/iamfurkann/DiskSan> and <https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex>.
+No automatic or scheduled command should probe actual storage hardware. The unit/integration tests use fake request wrappers and fixtures. An explicit maintainer-chosen physical NVMe query is a separate, logged verification step, not a prerequisite to every iterative build.
+
+## Minimum test/verification commands
+
+```sh
+cmake -S . -B build-v030 -DCMAKE_BUILD_TYPE=Release -DDISKSAN_WERROR=ON
+cmake --build build-v030 --config Release
+ctest --test-dir build-v030 -C Release --output-on-failure
+python3 tools/check_documentation.py
+git diff --check
+```
+
+When a supported native sanitizer toolchain is available:
+
+```sh
+cmake -S . -B build-v030-sanitize -DCMAKE_BUILD_TYPE=Debug -DDISKSAN_SANITIZERS=ON
+cmake --build build-v030-sanitize
+ctest --test-dir build-v030-sanitize --output-on-failure
+```
+
+Do not claim a GitHub CI run passed until a commit is actually pushed by the maintainer and the matching workflow run is observed. Never stage, push or trigger publication without permission.
+
+## Before maintainer release
+
+Use `docs/ACCEPTANCE_0.3.0.md`, `docs/PROTOCOL_TEST_MATRIX_0.3.0.md` and `docs/RELEASE_CHECKLIST_0.3.0.md` as acceptance references. Update product docs, code contracts, changelog and roadmap as needed; do not delete archived documents. Confirm exact compiler/test provenance, native OS query coverage, and physical-device gaps before calling it releasable. Rebuild final archives/checksums after every late source or packaged-document change. Report an honest unsupported-platform scope rather than invent uniform OS coverage.
+
+The assistant may prepare local release files, but the maintainer decides when to commit, tag `v0.3.0` and create/publish a pre-release.

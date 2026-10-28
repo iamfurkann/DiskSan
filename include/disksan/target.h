@@ -29,6 +29,17 @@ int ds_target_compare(const ds_device *before, const ds_device *after, ds_assess
  */
 int ds_assess_target(ds_inventory *target, ds_assessment *result, const char *selector, char *error, size_t size);
 /**
+ * @brief Explicitly probe capabilities inside the same non-atomic target observation window.
+ * @param[in,out] target Non-null empty initialized inventory; owns the selected snapshot only on success.
+ * @param[in,out] result Non-null assessment initialized by this call and poisoned on failure.
+ * @param[in] selector Nonempty borrowed native selector, reused unchanged for final revalidation.
+ * @param[out] error Non-null bounded diagnostic buffer without raw protocol contents.
+ * @param[in] size Positive byte capacity of error including terminator.
+ * @return 0 for inspection including unavailable probing, or the existing 1/2/3/4 failure classes.
+ * @note Only the explicit capabilities --probe CLI path calls this entrypoint; no handle or authority escapes.
+ */
+int ds_probe_capabilities_target(ds_inventory *target, ds_assessment *result, const char *selector, char *error, size_t size);
+/**
  * @brief Collect native read-only usage observations within the target window.
  * @param[in] device Borrowed selected snapshot; no ownership or writable handle is transferred.
  * @param[in,out] result Initialized assessment receiving copied evidence and limitations.

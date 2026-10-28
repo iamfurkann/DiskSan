@@ -121,3 +121,44 @@ return nonzero. Output failure can leave partial bytes, so consumers must requir
 both exit 0 and complete valid JSON. Exit 0 with blocked/review findings means only
 that inspection completed. Current native collectors always retain incomplete
 usage/physical scope and never claim the fully observed synthetic policy state.
+
+## 0.3.0 explicit protocol query receipt
+
+Only `capabilities <selector> --probe` requests the audited protocol provider.
+The option may precede the selector; options after `--` are literal selector
+text. Duplicate `--probe`, extra selectors, raw-command options, and `--probe`
+with `list`, `info` or `assess` are usage errors before discovery. Environment
+variables never enable probing. Existing commands omit the receipt and retain
+their metadata-only capability evidence and output layout.
+
+The opt-in schema-2 envelope adds `probe` with `requested: true`, `performed`
+(boolean), `query: "nvme_identify_controller"`, `provider`, `status` and `reason`.
+Providers are `none`, `linux_nvme_identify_controller` or
+`windows_nvme_property_query`; a label identifies a mechanism, not its
+availability on this build. `performed` means that a native query was attempted,
+including a failed query. Opening a metadata handle alone does not set it.
+
+| Status | Meaning |
+| --- | --- |
+| `complete` | A valid response and its selected-target association were checked; only documented support bits may be established |
+| `unavailable` | No usable response; reason distinguishes declined mapping, access denial, native failure and unreviewed versions |
+| `invalid_response` | An attempted query returned malformed fields or an invalid bounded envelope; support remains unknown |
+
+Stable reasons are `none`, `platform_unavailable`, `transport_not_audited`,
+`identity_unverified`, `permission_denied`, `query_failed`,
+`native_api_unavailable`, `invalid_response` and `version_not_audited`.
+An unavailable platform has provider `none` and `performed: false`.
+Transport or initial identity declines occur before querying. Loss or change
+of an established association during querying is instead fatal exit 3 with no
+success payload. A decoder version rejection requires an attempted query.
+
+Exactly one provider supplies the 24 method/dimension observations. A valid
+Identify Controller response can establish only NVMe block, crypto and overwrite
+`support`; ATA/SCSI support and all applicability/passthrough states remain
+unknown. Query permission denial sets NVMe `os_access` unavailable without
+claiming that any sanitization method was attempted. Successful Identify does
+not establish method access. Raw response bytes and controller text are omitted.
+
+Probing does not change snapshot expiry, identity guarantees, inspection policy,
+or literal `erase_authorized: false`. Platform implementation and validation
+coverage are recorded separately in [PROGRESS_0.3.0.md](PROGRESS_0.3.0.md).

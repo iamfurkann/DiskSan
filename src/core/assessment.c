@@ -3,6 +3,7 @@
  * @brief Evaluate bounded observational evidence with no OS calls or device operations.
  */
 #include "disksan/assessment.h"
+#include "disksan/protocol.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -140,7 +141,8 @@ static int finding(ds_assessment *result, const char *code, const char *category
 /** @brief Reduce all independent observations to conservative deterministic findings. */
 int ds_assessment_evaluate(ds_assessment *result)
 {
-    if (result->failed || result->check_count > DS_ASSESS_LIMIT || result->capability_count > DS_ASSESS_LIMIT) return invalid(result);
+    if (result->failed || result->check_count > DS_ASSESS_LIMIT || result->capability_count > DS_ASSESS_LIMIT ||
+        !ds_probe_report_valid(&result->probe)) return invalid(result);
     result->finding_count = 0;
     result->status = DS_INSPECTION_NO_BLOCKERS;
     for (unsigned c = 0; c < DS_CHECK_COUNT; ++c) {

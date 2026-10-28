@@ -4,6 +4,7 @@
  */
 #include "disksan/target.h"
 #include "disksan/discovery.h"
+#include "disksan/protocol.h"
 
 /** @brief Release a failed window and prevent evaluation of any retained partial observations. */
 static int fail_window(ds_inventory *target, ds_assessment *result, int rc)
@@ -13,7 +14,7 @@ static int fail_window(ds_inventory *target, ds_assessment *result, int rc)
     return rc;
 }
 /** @brief Keep fresh native selection, usage and final identity within one explicit observation window. */
-int ds_assess_target(ds_inventory *target, ds_assessment *result, const char *selector, char *error, size_t size)
+static int assess_window(ds_inventory *target, ds_assessment *result, const char *selector, bool probe, char *error, size_t size)
 {
     ds_assessment_init(result);
     if (size) error[0] = '\0';
@@ -34,7 +35,10 @@ int ds_assess_target(ds_inventory *target, ds_assessment *result, const char *se
     }
     rc = ds_collect_usage(device, result, error, size);
     if (rc) return fail_window(target, result, rc);
-    if (ds_collect_capabilities(device, result)) {
+    if (probe) {
+        rc = ds_collect_probed_capabilities(device, result, error, size);
+        if (rc) return fail_window(target, result, rc);
+    } else if (ds_collect_capabilities(device, result)) {
         (void)snprintf(error, size, "Cannot retain capability evidence.");
         return fail_window(target, result, 1);
     }
@@ -59,4 +63,14 @@ int ds_assess_target(ds_inventory *target, ds_assessment *result, const char *se
     if (rc) return fail_window(target, result, rc);
     ds_inventory_sort(target);
     return 0;
+}
+/** @brief Preserve metadata-only assessment with no protocol-query invocation. */
+int ds_assess_target(ds_inventory *target, ds_assessment *result, const char *selector, char *error, size_t size)
+{
+    return assess_window(target, result, selector, false, error, size);
+}
+/** @brief Select the audited protocol provider only for an explicit probing operation. */
+int ds_probe_capabilities_target(ds_inventory *target, ds_assessment *result, const char *selector, char *error, size_t size)
+{
+    return assess_window(target, result, selector, true, error, size);
 }

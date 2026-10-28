@@ -4,6 +4,7 @@
  */
 #include "disksan/assessment.h"
 #include "disksan/version.h"
+#include "disksan/protocol.h"
 
 static const char *const dimensions[] = {"support", "os_access", "applicability", "passthrough"};
 /** @brief Convert enum truth to a stable explicit string instead of coercing unknown to false. */
@@ -101,7 +102,16 @@ static void json_assessment(FILE *out, const ds_device *device, const ds_assessm
     fputs(",\"identity\":{", out); field(out, "status", verified(a) ? "verified_for_snapshot" : "partially_verified");
     fputs(",\"guarantees_future_identity\":false,\"atomic\":false,\"valid_until\":\"end_of_observation\"},", out);
     field(out, "inspection_status", inspection(a->status));
-    fputs(",\"erase_authorized\":false,\"observations\":[", out);
+    fputs(",\"erase_authorized\":false", out);
+    if (a->probe.status != DS_PROBE_NOT_REQUESTED) {
+        fputs(",\"probe\":{\"requested\":true,\"performed\":", out);
+        fputs(a->probe.performed ? "true," : "false,", out);
+        field(out, "query", "nvme_identify_controller"); fputc(',', out);
+        field(out, "provider", ds_probe_provider_name(a->probe.provider)); fputc(',', out);
+        field(out, "status", ds_probe_status_name(a->probe.status)); fputc(',', out);
+        field(out, "reason", ds_probe_reason_name(a->probe.reason)); fputs("}", out);
+    }
+    fputs(",\"observations\":[", out);
     for (size_t i = 0; i < a->check_count; ++i) {
         const ds_check_evidence *e = &a->checks[i];
         if (i) fputc(',', out);
@@ -135,7 +145,12 @@ static void text_assessment(FILE *out, const ds_device *device, const ds_assessm
     fprintf(out, "DiskSan v%s - %s (read-only snapshot)\n", DISKSAN_VERSION, capabilities ? "Capability Evidence" : "Target Assessment");
     fputs("Target: ", out); text_value(out, device->path.value); fputc('\n', out);
     fprintf(out, "Inspection status: %s\nIdentity: %s; non-atomic; no future guarantee.\n", inspection(a->status), verified(a) ? "verified for this snapshot" : "partially verified");
-    fputs("Erase authorized: NO. This assessment expires at the end of observation.\nFindings:\n", out);
+    fputs("Erase authorized: NO. This assessment expires at the end of observation.\n", out);
+    if (a->probe.status != DS_PROBE_NOT_REQUESTED)
+        fprintf(out, "Protocol probe: %s; provider=%s; performed=%s; reason=%s.\n%s\n",
+                ds_probe_status_name(a->probe.status), ds_probe_provider_name(a->probe.provider),
+                a->probe.performed ? "yes" : "no", ds_probe_reason_name(a->probe.reason), ds_probe_reason_detail(a->probe.reason));
+    fputs("Findings:\n", out);
     for (size_t i = 0; i < a->finding_count; ++i) {
         const ds_finding *f = &a->findings[i];
         fprintf(out, "  [%s] %s (%s): ", severity(f->severity), f->code, f->subject);
@@ -147,7 +162,8 @@ static void text_assessment(FILE *out, const ds_device *device, const ds_assessm
         fprintf(out, "  %s=%s [", ds_check_name(e->check), truth(e->state)); text_value(out, e->source);
         fputs("]: ", out); text_value(out, e->detail); fputc('\n', out);
     }
-    fputs("Informational method evidence (no commands are issued):\n", out);
+    fputs(a->probe.status == DS_PROBE_NOT_REQUESTED ? "Informational method evidence (no commands are issued):\n" :
+          "Informational method evidence (no sanitization method was executed):\n", out);
     for (unsigned m = 0; m < DS_METHOD_COUNT; ++m) {
         fprintf(out, "  %s:", ds_method_name((ds_method)m));
         for (unsigned d = 0; d < DS_CAP_DIMENSION_COUNT; ++d) fprintf(out, " %s=%s", dimensions[d], cap_state(cap_summary(a, (ds_method)m, (ds_cap_dimension)d)));
@@ -164,7 +180,8 @@ static void text_assessment(FILE *out, const ds_device *device, const ds_assessm
 int ds_assessment_output(FILE *out, const ds_device *device, const ds_assessment *result, bool json, bool capabilities)
 {
     if (result->failed || result->status == DS_INSPECTION_NOT_EVALUATED || result->check_count > DS_ASSESS_LIMIT ||
-        result->capability_count > DS_ASSESS_LIMIT || result->finding_count > DS_ASSESS_LIMIT) return 1;
+        result->capability_count > DS_ASSESS_LIMIT || result->finding_count > DS_ASSESS_LIMIT ||
+        !ds_probe_report_valid(&result->probe) || (!capabilities && result->probe.status != DS_PROBE_NOT_REQUESTED)) return 1;
     if (json) json_assessment(out, device, result, capabilities);
     else text_assessment(out, device, result, capabilities);
     int rc = fflush(out);

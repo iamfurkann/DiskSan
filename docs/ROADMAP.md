@@ -17,10 +17,18 @@ Transactional identity reconciliation, explicit ambiguity failures, bounded alte
 | Release gates | Hosted CI on the committed revision, maintainer publication, optional signing/notarization |
 | P2 | Linux ARM64, Intel/universal macOS, Windows ARM64, and broader runtime compatibility |
 
-## 0.2.0 - Read-only Target Assessment (unpublished candidate)
+## 0.2.0 - Read-only Target Assessment (published baseline)
 
-Target revalidation, usage-policy checks, explicit capability uncertainty and new CLI/JSON commands are implemented. Native Linux/macOS and synthetic checks have passing evidence; the final acceptance matrix and external Windows/CI/hardware gates are tracked in [progress](PROGRESS.md). Snapshots remain non-atomic and never authorize erasure. Define identity freshness and policy failure behavior before considering protocol operations.
+Target revalidation, usage-policy checks, explicit capability uncertainty and new CLI/JSON commands are implemented. The published baseline's four hosted jobs, including MSVC, passed on its tagged SHA; the actual reference was rechecked in [current M0 evidence](PROGRESS_0.3.0.md). Historical local results remain in [0.2.0 progress](PROGRESS.md). That evidence does not close current-version CI or physical-hardware gates. Snapshots remain non-atomic and never authorize erasure.
 
-## 0.3.x and later
+## 0.3.0 - Audited Read-only Capability Discovery
 
-Any NVMe/ATA/SCSI sanitize implementation needs a separate specification, platform/hardware scope, explicit target authorization, completion verification, and failure/recovery design. No destructive API, preflight write, or erasure certificate is part of 0.2.0.
+Explicit opt-in Linux NVMe Identify Controller, versioned decoding, independent
+capability evidence and native fault tests are the current candidate scope.
+Windows/macOS/ATA/SCSI protocol paths remain unavailable until individually
+audited and validated. See [current progress](PROGRESS_0.3.0.md) and the
+[longer-term roadmap](ROADMAP_TO_1.0.0.md).
+
+## Later releases
+
+Any NVMe/ATA/SCSI sanitize implementation needs a separate specification, platform/hardware scope, explicit target authorization, completion verification, and failure/recovery design. No destructive API, preflight write, or erasure certificate is part of 0.2.0 or 0.3.0.

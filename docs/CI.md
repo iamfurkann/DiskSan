@@ -16,3 +16,13 @@ CTest labels make deterministic, native, and packaging results visible separatel
 The macOS comparison brackets discovery with two diskutil plist snapshots. A stable reference mismatch fails. Only three consecutive measured reference topology changes can skip that integration class, with a reason in the log. API access failure is a hard failure, not a skip. CLI unsupported-host coverage skips when a native adapter exists. Linux missing by-id/device prerequisites and Windows unavailable device prerequisites are explicit test skips; inspect them before asserting hardware coverage.
 
 Workflow YAML was parsed locally; local CTest results are reported separately. No hosted run for this unstaged change set has been observed. After the maintainer pushes, inspect all four jobs on the exact commit and record the run URL. A successful Windows compile does not replace real-device acceptance on the owner's Windows system. Branch protection, settings, secrets, or manual dispatch are not changed by this workflow preparation.
+
+## 0.3.0 protocol gates
+
+The existing portable/fault labels include decoder, receipt, explicit CLI,
+unavailable-adapter and Linux fixed-request/lifecycle fixtures. All protocol
+requests in these tests are synthetic. Native integration remains metadata-only;
+no workflow selects a physical protocol target or invokes live `--probe`.
+Windows compiles the unavailable adapter, not an unvalidated property provider.
+The v0.2.0 tag run is a baseline; actual 0.3.0 committed-source CI remains a
+maintainer gate until that source has been pushed and its jobs observed.

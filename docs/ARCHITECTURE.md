@@ -27,13 +27,13 @@ Linux rechecks sysfs dev/diskseq and opened descriptor identity. macOS rechecks 
 
 ## Read-only boundary
 
-Linux opens block nodes with `O_RDONLY | O_CLOEXEC | O_NONBLOCK | O_NOFOLLOW`. Its ioctl allowlist contains only `BLKGETSIZE64`, `BLKSSZGET`, and `BLKPBSZGET`. Permission failures retain available sysfs data and warnings.
+Linux opens block nodes with `O_RDONLY | O_CLOEXEC | O_NONBLOCK | O_NOFOLLOW`. Its discovery ioctl allowlist contains only `BLKGETSIZE64`, `BLKSSZGET`, and `BLKPBSZGET`. Permission failures retain available sysfs data and warnings.
 
 macOS reads registry and Disk Arbitration descriptions without opening device data. Windows requests `GENERIC_READ`, falling back to zero access after permission denial. `FILE_SHARE_WRITE` allows sharing with existing OS users; it does not grant this application write access. `IOCTL_DISK_IS_WRITABLE` is a status query and performs no write.
 
 ## Extension boundary
 
-Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Version 0.2.0 intentionally contains no erase backend.
+Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Versions 0.2.0 and 0.3.0 contain no erase backend.
 
 ## Primary references
 
@@ -81,3 +81,30 @@ same device renderer. No snapshot, token or handle authorizes a future operation
 
 See [the query audit](READ_ONLY_AUDIT_0.2.0.md) for exact native calls, bounds,
 fall-back behavior and test coverage; [the schema](DEVICE_MODEL.md) defines output.
+
+## Explicit protocol pipeline in 0.3.0
+
+`target.c` chooses exactly one capability provider inside the existing selected
+target window. `capabilities.c` remains the default metadata-only provider.
+`probe.c` invokes the closed native query only after explicit CLI opt-in, validates
+the receipt, and emits exactly 24 method/dimension observations. Unknown default
+placeholders are never mixed into valid protocol evidence. Overflow or malformed
+internal receipts poison the result and prevent success output.
+
+`protocol.c` in the portable core decodes a fixed 4096-byte reply using endian-safe
+byte reads and explicit version/field guards. It retains only version, controller
+ID, maximum NSID and SANICAP bits. Three NVMe support dimensions may be established;
+all remaining dimensions retain their independent evidence state.
+
+The Linux adapter separates `protocol_mapping.c` (fresh direct udev ancestry and
+node identity), `protocol_query.c` (one zeroed constant request), and `protocol.c`
+(descriptor ownership, pre/post mapping checks, status handling and decoding).
+It opens the observed controller character node once with read-only flags. No
+controller node is derived from a namespace name. The final original-selector
+resolution remains mandatory and no descriptor escapes the operation.
+
+Other platforms compile `protocol_unavailable.c`, with no native protocol calls.
+Windows property and macOS SMART interfaces are candidates for separate future
+validation, not enabled providers. The [protocol audit](PROTOCOL_QUERY_AUDIT_0.3.0.md)
+records exact calls and limitations; the [schema](DEVICE_MODEL.md) defines the
+additive opt-in receipt. All snapshots retain false erase authorization.

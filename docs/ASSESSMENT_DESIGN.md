@@ -1,7 +1,9 @@
 # Read-only assessment design (0.2.0 implementation)
 
 This is the implementation contract, not a statement that every milestone has
-passed. See `PROGRESS.md` for evidence and remaining work.
+passed. See `PROGRESS.md` for historical 0.2.0 evidence. The additive 0.3.0
+provider path is documented in [architecture](ARCHITECTURE.md) and
+[the protocol audit](PROTOCOL_QUERY_AUDIT_0.3.0.md); the policy below remains unchanged.
 
 ## Observation and policy boundary
 
