@@ -12,7 +12,7 @@ ctest --test-dir build-sanitize --output-on-failure -V
 python3 tools/check_documentation.py
 ```
 
-GCC/Clang use Wall, Wextra, Wpedantic, Wconversion, Wshadow, and Werror. MSVC uses C17 and W4/WX; native 0.3.0 validation is pending. Tagged 0.2.0 CI is historical evidence only. Python 3.9 or newer runs the test scripts. See [CI](CI.md) for runner definitions and separate portable/fault/integration/packaging gates.
+GCC/Clang use Wall, Wextra, Wpedantic, Wconversion, Wshadow, and Werror. MSVC uses C17 and W4/WX; native 0.4.0 validation is pending. Tagged 0.3.0 CI is historical evidence only. Python 3.9 or newer runs the test scripts. See [CI](CI.md) for runner definitions and separate portable/fault/integration/packaging gates.
 
 ## Existing test groups retained in 0.2.0
 
@@ -36,7 +36,7 @@ Fault wrappers never open actual block data. Core allocation substitution is lim
 
 ## Evidence and scope
 
-The [0.1.0 report](WORK_REPORT.md) preserves historical results. See [0.1.1 validation](WORK_REPORT_0.1.1.md) for baseline results; [0.2.0 progress](PROGRESS.md) preserves that development record. [Current 0.3.0 progress](PROGRESS_0.3.0.md) records the active compiler/build results, skips, limitations and release gates. A checked-in workflow is not a successful hosted run. Windows buffer fixtures and MinGW cross-compilation are not native Windows execution.
+The [0.1.0 report](WORK_REPORT.md) preserves historical results. See [0.1.1 validation](WORK_REPORT_0.1.1.md), [0.2.0 progress](PROGRESS.md) and [0.3.0 progress](PROGRESS_0.3.0.md) for historical records. [Current 0.4.0 progress](PROGRESS_0.4.0.md) records actual compiler/build results, skips, limitations and release gates. A checked-in workflow is not a successful hosted run. Windows buffer fixtures and MinGW cross-compilation are not native Windows execution.
 
 Mac tests use read-only diskutil only as a reference; production uses registry/Disk Arbitration APIs. Three measured reference topology changes may skip the comparison class; a stable mismatch, invalid JSON, or API failure fails. Other integration assertions retain their failure semantics. Linux missing device/by-id prerequisites are explicit skips. CLI output-error tests pass an inherited read-only file handle on each OS; they use no Unix-only preexec or invalid-fd assumption, but Windows execution still needs confirmation.
 
@@ -124,3 +124,34 @@ macOS and Windows candidates currently return a no-query unavailable receipt.
 Their discovery/assessment tests remain useful, but they cannot count as native
 protocol-query tests. Native Windows MSVC validation of this source must precede
 any future WN-01 provider activation; cross-compilation is insufficient.
+
+## Inspection planning and simulation in 0.4.0
+
+`plan_policy` tests conservative hazard precedence, missing identity, independently varied capability dimensions, ownership, aliasing, malformed counts/enums/strings, copied observations and rejection of forged derived output before a byte is written. The model does not allocate; CLI allocation failures are tested separately.
+
+`plan_cli` runs the same 21 unittest cases across plan and simulation classes: additive schema, unchanged device records, exact uint64/UTF-8, grammar, opaque selectors, old exit classes, stream failure, stale/denied/lost targets and deterministic ten-step transcripts. It exhausts eight substituted core allocations across both observation snapshots for each verb, with no retained allocation on failure. A forbidden-protocol adapter exits 99 if reached; an explicit synthetic `capabilities --probe` positive control proves the guard is live. Neither new verb reaches it.
+
+```sh
+ctest --test-dir build -R '^(plan_policy|plan_cli)$' --output-on-failure -V
+```
+
+## Optional desktop tests
+
+Configure Qt explicitly as described in [desktop architecture](GUI_ARCHITECTURE_0.4.0.md). CLI builds with desktop OFF remain independent. A desktop ON configuration must fail if Qt cannot be found; absence is not a skipped successful GUI build.
+
+| CTest group | Executed behavior |
+|---|---|
+| desktop_json_bounds | Type/exact-number preservation, invalid Unicode/escapes, duplicate keys, bounds and ownership |
+| desktop_cli_contract | Fixed argument arrays, all real synthetic CLI envelopes, schema mutation/rejection, identity mismatch and false authority |
+| desktop_process_boundary | Actual pinned synthetic child processes; version, missing CLI/retry, output/timeout/error limits, stale races and async shutdown |
+| desktop_ui_fixture | Actual production QML; inventory/assessment/plan/simulation, empty/missing/error views, keyboard, Qt accessible names, explicit high-contrast palettes and synthetic-only screenshot |
+| desktop_ui_native | Actual QML plus native CLI metadata inventory and selected info/assess/capabilities/plan/simulate; no physical protocol probe or raw metadata log |
+
+```sh
+ctest --test-dir build-desktop -C Release -L desktop -E native --output-on-failure -V
+ctest --test-dir build-desktop -C Release -R '^desktop_ui_native$' --output-on-failure -V
+```
+
+The QML CTest groups request Qt's offscreen platform and software scene graph. They render a real window and exercise controls; no-display or plugin failure must be FAIL/NOT_RUN, never UI PASS. Native Cocoa testing can run `test_desktop_ui` with `QT_QPA_PLATFORM=cocoa` on macOS. Tests check accessible interfaces, not actual screen-reader announcements; VoiceOver/NVDA/AT-SPI, OS contrast/theme integration and broader physical display/DPI coverage remain separate gates. Prebuilt Qt libraries are not themselves sanitizer-instrumented.
+
+Use only the fixture app for screenshots. Production does not accept a demo or CLI-path override. Read-only native tests may explicitly skip when there is no usable selector; record that scope. Test cancellation terminates only the test-owned child, never a disk operation. Default tests never require a physical Identify query.

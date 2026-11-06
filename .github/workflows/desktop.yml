@@ -1,0 +1,57 @@
+# @file
+# @brief Manually opt into separate Qt source-build validation without changing the standalone CLI jobs.
+name: Optional desktop alpha
+'on':
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  desktop:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux Qt 6.12 source build
+            os: ubuntu-24.04
+            qt_host: linux
+            qt_arch: linux_gcc_64
+            qt_dir: gcc_64
+            qt_extra_archives: icu
+          - name: macOS Qt 6.12 source build
+            os: macos-15
+            qt_host: mac
+            qt_arch: clang_64
+            qt_dir: macos
+            qt_extra_archives: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Linux dependencies on the disposable runner
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake pkg-config libudev-dev libgl1-mesa-dev libegl1-mesa-dev libxkbcommon-dev libfontconfig1-dev doxygen
+      - name: Install exact Qt SDK in the job workspace
+        shell: bash
+        run: |
+          python3 -m venv .qt-tools
+          .qt-tools/bin/python -m pip install aqtinstall==3.3.0
+          .qt-tools/bin/python -m aqt install-qt ${{ matrix.qt_host }} desktop 6.12.0 ${{ matrix.qt_arch }} -O .qt --archives qtbase qtdeclarative qtsvg ${{ matrix.qt_extra_archives }} --modules qtshadertools
+      - name: Configure optional desktop
+        run: cmake -S . -B build-desktop -DCMAKE_BUILD_TYPE=Release -DDISKSAN_BUILD_DESKTOP=ON -DDISKSAN_WERROR=ON -DCMAKE_PREFIX_PATH=${{ github.workspace }}/.qt/6.12.0/${{ matrix.qt_dir }}
+      - name: Build actual app and fixtures
+        run: cmake --build build-desktop --config Release --parallel 2
+      - name: Process, JSON and real QML fixture tests
+        run: ctest --test-dir build-desktop -C Release -L desktop -E native --output-on-failure -V
+      - name: Native metadata through QML without protocol probing
+        run: ctest --test-dir build-desktop -C Release -R '^desktop_ui_native$' --output-on-failure -V
+      - name: Documentation and CLI-only packaging with desktop enabled
+        run: ctest --test-dir build-desktop -C Release -R '^(documentation|packaging_smoke)$' --output-on-failure -V
+      - name: API reference
+        if: runner.os == 'Linux'
+        run: doxygen Doxyfile

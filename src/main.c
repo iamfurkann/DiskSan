@@ -4,6 +4,7 @@
  */
 #include "disksan/discovery.h"
 #include "disksan/target.h"
+#include "disksan/plan.h"
 #include "disksan/version.h"
 #include <signal.h>
 #include <stdio.h>
@@ -24,14 +25,30 @@ static int usage(FILE *out, int code)
           "  disksan info [--json] [--] <block-device> [--json]\n"
           "  disksan assess [--json] [--] <native-device-selector> [--json]\n"
           "  disksan capabilities [--json] [--probe] [--] <native-device-selector> [--json] [--probe]\n"
+          "  disksan plan [--json] [--] <native-device-selector> [--json]\n"
+          "  disksan simulate [--json] [--] <native-device-selector> [--json]\n"
           "Read-only inventory for Linux, macOS and Windows. No erase operations exist.\n"
           "Default list omits partitions, volumes and snapshots; --all includes them.\n"
           "Assessments and capability observations never authorize erasure.\n"
+          "Plans are non-executable simulation models; no method is selected or run.\n"
           "Protocol queries require explicit capabilities --probe; other commands never probe.\n"
           "Inspection exit 0 includes blocked/review findings; it means inspection succeeded.\n"
           "Examples: disksan list --json; disksan info /dev/sda --json\n"
           "Exit: 0 success, 1 system, 2 usage, 3 invalid target, 4 permission.\n", out);
     return fflush(out) == 0 ? code : 1;
+}
+
+/** @brief Build and render only a non-executable diagnosis after the ordinary assessment window completes. */
+static int output_plan(FILE *out, const ds_device *device, const ds_assessment *assessment, bool json, bool simulation)
+{
+    ds_plan plan;
+    if (ds_plan_build(device, assessment, &plan)) return 1;
+#ifdef DISKSAN_SYNTHETIC_INPUT
+    const ds_plan_origin origin = DS_PLAN_SYNTHETIC_OBSERVATIONS;
+#else
+    const ds_plan_origin origin = DS_PLAN_NATIVE_OBSERVATIONS;
+#endif
+    return simulation ? ds_simulation_output(out, device, &plan, json, origin) : ds_plan_output(out, device, &plan, json, origin);
 }
 
 /** @brief Validate UTF-8 arguments, discover a snapshot, render it, and release its memory. */
@@ -50,7 +67,9 @@ static int run_main(int argc, char **argv)
     bool info = strcmp(argv[1], "info") == 0;
     bool assess = strcmp(argv[1], "assess") == 0;
     bool capabilities = strcmp(argv[1], "capabilities") == 0;
-    bool inspect = assess || capabilities;
+    bool plan = strcmp(argv[1], "plan") == 0;
+    bool simulation = strcmp(argv[1], "simulate") == 0;
+    bool inspect = assess || capabilities || plan || simulation;
     if (!list && !info && !inspect) return usage(stderr, 2);
     if (inspect && argc == 3 && strcmp(argv[2], "--help") == 0) return usage(stdout, 0);
     bool json = false, all = false, probe = false, end_options = false;
@@ -77,7 +96,8 @@ static int run_main(int argc, char **argv)
         fputc('\n', stderr);
     } else {
         ds_inventory_sort(&inventory);
-        result = inspect ? ds_assessment_output(stdout, &inventory.items[0], &assessment, json, capabilities) :
+        result = plan || simulation ? output_plan(stdout, &inventory.items[0], &assessment, json, simulation) :
+                 inspect ? ds_assessment_output(stdout, &inventory.items[0], &assessment, json, capabilities) :
                            ds_output(stdout, &inventory, json, all || info, info);
         if (result != 0) fputs("DiskSan: output failed.\n", stderr);
     }

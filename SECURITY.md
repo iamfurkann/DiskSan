@@ -1,10 +1,10 @@
 # Security policy
 
-DiskSan 0.3.0 is a read-only discovery, target-assessment and opt-in controller-capability tool. It does not erase, sanitize, format, discard, modify partitions, or certify erasure. Observed identities and snapshots never authorize destructive operations.
+DiskSan 0.4.0 is a read-only discovery, assessment, inspection-planning and non-executable simulation tool, with an optional desktop alpha. It does not erase, sanitize, format, discard, modify partitions, or certify erasure. Observed identities, plans, simulation steps and UI selections never authorize destructive operations.
 
 ## Supported versions
 
-Security and reliability fixes target the latest maintained source and published release. Version 0.3.0 is a development candidate until its maintainer publishes it; 0.2.0 is the historical published baseline. Older development builds should be replaced by the latest published version; no long-term support promise is made. Native Windows acceptance remains pending.
+Security and reliability fixes target the latest maintained source and published release. Version 0.4.0 is under development; 0.3.0 is the published historical baseline recorded in `docs/BASELINE_0.3.0.md`. No long-term support promise is made. Current-version native Windows and desktop distribution acceptance remain separate gates.
 
 ## Reporting a vulnerability
 
@@ -39,3 +39,11 @@ before sharing. Failed, unrecognized or unassociated replies establish no method
 support. A successful Identify response does not establish sanitization access,
 scope, media guarantees or authorization. Tests use synthetic native boundaries;
 physical protocol acceptance requires explicit maintainer-selected hardware.
+
+## Planning and desktop boundary in 0.4.0
+
+The portable plan copies bounded evidence and retains no native handle. It accepts no saved-plan import and emits no executable method, command, token or authorization. A modeled step is not a submitted or completed hardware operation. The future service described in the [threat model](docs/THREAT_MODEL_0.4.0.md) is design-only.
+
+The desktop launches only its configured absolute CLI, with fixed enumerated arguments and current inventory selectors. It requires the exact version, successful exit and validated bounded schema-2 response. Failed or superseded requests discard selected results; no shell, elevation or `--probe` route exists. Device text is plain text and raw stderr is not displayed. No inventory telemetry, export or persistent cache is implemented.
+
+Executable pinning assumes trustworthy installation and shared-library ownership. A version response is not binary authenticity, and pathname checks cannot defeat an attacker who already controls the user's executable or Qt environment. Source-build alpha binaries are not signed deployment bundles. See the [desktop contract](docs/GUI_ARCHITECTURE_0.4.0.md) for resource limits and remaining release gates.

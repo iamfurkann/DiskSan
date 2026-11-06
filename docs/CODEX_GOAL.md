@@ -1,33 +1,21 @@
-# Codex Goal - DiskSan v0.3.0
+# Codex Goal - DiskSan v0.4.0
 
-The following is a *new* objective. Do not reuse the old v0.2.0 `/goal`; that milestone is published. This file is a human launch document; placing it in `docs` does not by itself activate a thread-level goal.
+This file defines a **new thread-level objective**. `AGENTS.md` is standing repository instruction; neither storing this file nor a previously active v0.3.0 goal activates the new goal. Use this goal only after merging the 0.4.0 kit into the actual DiskSan repository and inspecting current source.
 
 ## Ready-to-paste `/goal`
 
-Copy the one line inside the code block, starting with `/goal`, into a Codex thread if that interface supports Goals:
+Copy the entire single line below as the initial objective in a Codex thread whose interface supports Goals:
 
 ```text
-/goal Implement DiskSan v0.3.0 Native Protocol Capability Discovery from the actual current repository checkout according to AGENTS.md, docs/specs/v0.3.0.md and docs/PROTOCOL_QUERY_AUDIT_0.3.0.md. First inspect HEAD, working-tree changes, the published v0.2.0 baseline and existing tests; preserve user work. Add a closed, precisely audited and explicitly opt-in read-only `capabilities <selector> --probe` path, with genuine capability evidence from only verified fixed NVMe Identify Controller query mechanisms, primary Linux and conditional Windows; do not invent ATA/SCSI/macOS support or use generic pass-through. Preserve default non-probing list/info/assess/capabilities behavior, schema-2 compatibility, independent capability dimensions, non-atomic identity limits and literal erase_authorized=false. Independently design, implement, test and repair coherent milestones M0-M7, including all forbidden-command/flag tests, bounded response decoding, target-revalidation and handle/error cleanup, platform tests, sanitizers, documentation/manifest, and packaging checks. Keep docs/PROGRESS_0.3.0.md current with actual evidence and distinguish PASS/FAIL/SKIP/BLOCKED/NOT_RUN; do not paste private identifiers into public files. Continue reachable independent engineering work without routine confirmation requests, but never read/write storage user-data sectors, issue any state-changing protocol command, elevate privilege for tests, auto-probe physical hardware, or stage/commit/push/tag/release/change repository settings without new authorization. If platform API or physical device access is unavailable, implement safe truthful fallbacks, leave unsupported claims UNKNOWN/UNAVAILABLE, and report exact blockers. Finish with an evidence-based candidate handoff, not an unsupported release or v1.0.0 claim.
+/goal Implement DiskSan v0.4.0 from the actual current repository according to AGENTS.md and docs/specs/v0.4.0.md, using the published v0.3.0 state at docs/BASELINE_0.3.0.md only as historical reference. Build a bounded fail-closed C17 inspection-only operation planner and deterministic non-executable simulation CLI with schema-2 additive outputs; independently document the future authorization threat architecture but do not implement any destructive backend. Also deliver a real optional Qt 6 Quick/QML desktop alpha with live read-only inventory, device assessment and clearly labeled simulation preview, using a strictly allowlisted bounded QProcess/JSON bridge and no automatic capability probing. Preserve v0.3.0 list/info/assess/capabilities and explicit --probe behavior, legacy types/exit codes and the exact prior native protocol allowlist. Work through M0-M7 in docs/PROGRESS_0.4.0.md, implement code and deterministic negative/fault tests, run supported builds/sanitizers/Qt smoke and CI-related local checks, update documentation/manifests, and report all PASS/FAIL/SKIP/NOT_RUN gates honestly. No erase/sanitize/format/discard/firmware mutation, no user-data I/O, no mount modification, no elevation, no future executable authorization token, no GUI execute control and no real-device destructive tests. Preserve all user changes. Never commit, push, tag, publish a Release, trigger deployment or alter repository settings without explicit maintainer authorization. Finish all independent reachable work, then give an evidence-backed handoff with exact SHA, unsupported Qt platforms, skipped tests and remaining real-hardware/GUI release gates; never confuse a simulated operation with a completed erase.
 ```
 
-## Normal prompt alternative (when `/goal` is not supported)
+## Ordinary initial prompt if `/goal` is not available
 
 ```text
-Continue development of DiskSan from its live repository state. Implement v0.3.0 as described in AGENTS.md, docs/specs/v0.3.0.md and docs/PROTOCOL_QUERY_AUDIT_0.3.0.md. First inspect the actual branch, HEAD, user edits and current tests. Preserve existing v0.2.0 behavior and historical documents. Execute M0-M7 with real implementation and targeted/full tests, not just a plan. Add opt-in, strictly allowlisted read-only native NVMe capability discovery where safely supported; leave unverified ATA/SCSI/macOS/bridge cases unknown or unavailable. Never use destructive commands or automatic live-device probing. Update docs/PROGRESS_0.3.0.md with verified results, skips and limitations. Do not stage, commit, push, tag, publish releases or change repository settings. Give a concise technical report listing implemented code, exact tests, unresolved physical/native gates and the proposed next safe step.
+Implement the DiskSan v0.4.0 engineering objective in the open repository. Read AGENTS.md, docs/specs/v0.4.0.md, docs/GUI_ARCHITECTURE_0.4.0.md, docs/SIMULATION_CONTRACT_0.4.0.md and docs/PROGRESS_0.4.0.md; treat docs/BASELINE_0.3.0.md as an observed historical baseline, not live source. Inspect actual git status and tools first. Do the coding, testing, documentation and optional Qt Quick desktop integration; do not stop at a design or synthetic UI mockup. No real erasure or device-data access. No accidental NVMe --probe. Maintain old CLI/contracts and strict error semantics. Work through M0-M7 and update progress on verified milestones. Preserve changes. Do not commit, push, tag or publish without authorization. When an external dependency blocks a platform, record NOT_RUN/BLOCKED and continue independently reachable implementation. End with precise evidence and remaining gates.
 ```
 
-## Optional short session continuation
+## Session management
 
-If your thread context is reset, reopen the actual repo and send:
-
-```text
-Continue DiskSan v0.3.0 from the current checkout. Read AGENTS.md, the next incomplete milestone in docs/PROGRESS_0.3.0.md, its relevant sections in docs/specs/v0.3.0.md and the native query audit. Check git status and existing user edits before changes. Complete and test the next reachable milestone, update actual evidence, and continue as permitted; do not reset to v0.2.0 or publish anything.
-```
-
-## Operational notes
-
-- Some Codex versions/clients may not provide `/goal`; use the ordinary prompt instead. Do not assume an unrecognized slash command enabled a persistent goal.
-- The goal is associated with the current thread if supported; it is not automatically global across projects.
-- `AGENTS.md` should be at the repository root for standing instructions. The version spec and query audit contain functional requirements, and `PROGRESS_0.3.0.md` carries persistent facts.
-- Actual build/test/CI evidence beats any status claim in old plans. Ask the maintainer only when new privileges, hardware, authorization, missing dependency or substantial scope change is required.
-- Completing implementation is not permission to run dangerous commands or create a GitHub Release.
+A Goal is not persistent repository metadata and does not guarantee autonomous infinite execution. If a prior v0.3.0 goal remains active in the same thread, clear or replace it using the controls supported in that specific Codex interface. In a fresh thread, issue the 0.4.0 goal and use `docs/PROGRESS_0.4.0.md` for handoff. Do not paste every markdown document into context; the goal names the necessary paths and the assistant reads relevant sections on demand.

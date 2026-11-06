@@ -1,17 +1,19 @@
 # @file
-# @brief Generate an English HTML reference for the portable API and native adapters.
+# @brief Generate an English HTML reference for the portable API, native adapters and optional desktop bridge.
 PROJECT_NAME           = DiskSan
 OUTPUT_DIRECTORY       = build-api
 OUTPUT_LANGUAGE        = English
-INPUT                  = include src tests tools docs README.md CONTRIBUTING.md CHANGELOG.md SECURITY.md
-FILE_PATTERNS          = *.h *.c *.py *.md
+INPUT                  = include src tests tools desktop docs README.md CONTRIBUTING.md CHANGELOG.md SECURITY.md
+FILE_PATTERNS          = *.h *.c *.cpp *.hpp *.py *.md
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE  = README.md
 EXTRACT_ALL            = YES
 EXTRACT_STATIC         = YES
 ENABLE_PREPROCESSING   = YES
-MACRO_EXPANSION        = NO
 PREDEFINED            = __linux__=1 _WIN32=1
+PREDEFINED           += Q_OBJECT= Q_INVOKABLE= "signals=public" "slots="
+EXPAND_ONLY_PREDEF     = YES
+MACRO_EXPANSION        = YES
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
 GENERATE_HTML          = YES

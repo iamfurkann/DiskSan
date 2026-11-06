@@ -17,18 +17,20 @@ Transactional identity reconciliation, explicit ambiguity failures, bounded alte
 | Release gates | Hosted CI on the committed revision, maintainer publication, optional signing/notarization |
 | P2 | Linux ARM64, Intel/universal macOS, Windows ARM64, and broader runtime compatibility |
 
-## 0.2.0 - Read-only Target Assessment (published baseline)
+## 0.2.0 - Read-only Target Assessment (historical release)
 
 Target revalidation, usage-policy checks, explicit capability uncertainty and new CLI/JSON commands are implemented. The published baseline's four hosted jobs, including MSVC, passed on its tagged SHA; the actual reference was rechecked in [current M0 evidence](PROGRESS_0.3.0.md). Historical local results remain in [0.2.0 progress](PROGRESS.md). That evidence does not close current-version CI or physical-hardware gates. Snapshots remain non-atomic and never authorize erasure.
 
 ## 0.3.0 - Audited Read-only Capability Discovery
 
 Explicit opt-in Linux NVMe Identify Controller, versioned decoding, independent
-capability evidence and native fault tests are the current candidate scope.
+capability evidence and native fault tests form the published historical baseline.
 Windows/macOS/ATA/SCSI protocol paths remain unavailable until individually
-audited and validated. See [current progress](PROGRESS_0.3.0.md) and the
+audited and validated. See [historical progress](PROGRESS_0.3.0.md) and the
 [longer-term roadmap](ROADMAP_TO_1.0.0.md).
 
 ## Later releases
 
-Any NVMe/ATA/SCSI sanitize implementation needs a separate specification, platform/hardware scope, explicit target authorization, completion verification, and failure/recovery design. No destructive API, preflight write, or erasure certificate is part of 0.2.0 or 0.3.0.
+The active 0.4.0 implementation adds non-executable inspection plans and deterministic simulation, design-only future authorization architecture, and an optional source-build Qt Quick desktop. The desktop uses the existing CLI through a pinned, bounded read-only process bridge. See [current progress](PROGRESS_0.4.0.md), [acceptance](ACCEPTANCE_0.4.0.md) and [desktop platform limits](GUI_ARCHITECTURE_0.4.0.md). It has no executable backend or automatic capability probe. Signed GUI packaging, native Windows Qt, end-to-end assistive-technology acceptance and broader hardware coverage remain separate work.
+
+Any NVMe/ATA/SCSI sanitize implementation needs a separate specification, platform/hardware scope, explicit target authorization, completion verification, and failure/recovery design. No destructive API, preflight write, or erasure certificate is part of 0.4.0 or its earlier releases.

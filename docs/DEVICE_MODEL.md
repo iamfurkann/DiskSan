@@ -162,3 +162,48 @@ not establish method access. Raw response bytes and controller text are omitted.
 Probing does not change snapshot expiry, identity guarantees, inspection policy,
 or literal `erase_authorized: false`. Platform implementation and validation
 coverage are recorded separately in [PROGRESS_0.3.0.md](PROGRESS_0.3.0.md).
+
+## 0.4.0 inspection plan and simulation envelopes
+
+`plan` and `simulate` accept one fresh native selector using the same before/after
+assessment window as `assess`. Both are metadata-only; neither invokes a protocol
+query. Literal `--` ends option recognition. Only `--json` is accepted in these
+verbs; `--probe`, method selection, execution and elevation options are rejected.
+
+Both additive schema-2 envelopes retain `application`, `version`, `mode: "read-only"`
+and the unchanged single `device` record, with exact integer capacities. They add:
+
+| Field | Meaning |
+|---|---|
+| `operation` | `plan` or `simulate` |
+| `simulation_only` | Always `true`, including native observations |
+| `execution_available`, `erase_authorized`, `verification_available` | Always `false` |
+| `privilege_unknown` | Always `true`; ordinary inspection does not establish future privileges |
+| `physical_scope_unknown` | True unless consistent copied physical-scope evidence is true |
+| `target_observed` | A bounded nonempty native path was observed |
+| `inspection_status` | `blocked`, `review_required`, `insufficient_evidence` or `inspection_only`; none authorizes anything |
+| `evidence_origin` | `native_read_only_snapshot` in the CLI; `synthetic_fixture` in dedicated test builds |
+| `identity` | `atomic:false`, `guarantees_future_identity:false`, `valid_until:"end_of_observation"`, status `observed_for_snapshot` or `incomplete` |
+| `findings` | Rebuilt policy findings with code, category, subject, severity, state, source and message |
+| `observations` | Copied check/state/source/detail records; states remain `true`, `false` or `unknown` strings |
+| `method_evidence` | Independent method/dimension/state/source/detail records; no method recommendation |
+| `prerequisites` | Ten fixed modeled requirements, each with code, state, evidence_scope, explanation and `modeled_only:true` |
+| `steps` | Empty for `plan`; ten fixed modeled entries for `simulate` |
+| `simulation_result` | Only in `simulate`, always `non_executable_model_only` |
+
+Capability states remain distinct: `observed_supported`, `observed_unsupported`,
+`unavailable`, `unknown`. Dimensions remain support, os_access, applicability and
+passthrough. Observations, capability evidence and rebuilt findings each have at
+most 64 entries. Source and detail arrays retain their existing 96/256-byte
+storage bounds including the terminator. The plan owns these copies, is smaller
+than 128 KiB, and allocates no heap memory. Invalid counts, enums, strings or
+inconsistent derived states fail before output; native snapshot allocation and
+stream failures still return nonzero and must not be consumed as success.
+
+Known hazards take precedence over unknown or conflicting observations. Missing
+identity/generation produces insufficient evidence unless a known hazard blocks.
+Even complete synthetic evidence can only produce `inspection_only`; privilege,
+authorization, exclusive access, execution and verification remain unimplemented.
+All terminal output permanently labels the model `SIMULATION ONLY - DOES NOT
+ERASE DATA`; synthetic fixtures also carry `DEMO DATA`. No saved plan or transcript
+can be supplied to an execution or authorization API.

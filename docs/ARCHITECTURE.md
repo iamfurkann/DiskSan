@@ -33,7 +33,7 @@ macOS reads registry and Disk Arbitration descriptions without opening device da
 
 ## Extension boundary
 
-Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. Versions 0.2.0 and 0.3.0 contain no erase backend.
+Future sanitization needs separate protocol, permission, target-revalidation, policy, and completion-verification layers. Cross-platform inventory does not imply identical destructive capabilities on each operating system. No erase backend exists through 0.4.0.
 
 ## Primary references
 
@@ -108,3 +108,13 @@ Windows property and macOS SMART interfaces are candidates for separate future
 validation, not enabled providers. The [protocol audit](PROTOCOL_QUERY_AUDIT_0.3.0.md)
 records exact calls and limitations; the [schema](DEVICE_MODEL.md) defines the
 additive opt-in receipt. All snapshots retain false erase authorization.
+
+## Inspection model and desktop in 0.4.0
+
+`plan.c` accepts an evaluated assessment and its selected device snapshot, copies bounded observations and reconstructs findings. The owned model allocates no heap memory and performs no OS calls. Known hazards remain blocking, missing identity produces insufficient evidence and unresolved coverage requires review. Even fully favorable synthetic evidence yields only `inspection_only`; privilege, authorization, exclusive access, execution and completion verification remain unimplemented.
+
+`plan_output.c` revalidates derived state before writing either envelope. `plan` has no steps; `simulate` has ten fixed modeled steps. Both use the existing default metadata-only target window, unchanged device renderer and exit classes. There is no new protocol request, method selection, stored-plan import or simulation-to-execution bridge. The [simulation contract](SIMULATION_CONTRACT_0.4.0.md) describes the exact states and provenance.
+
+Optional C++17/Qt code lives entirely in `desktop/`. `BoundedJson` preserves uint64 tokens and types; `CliContract` validates the complete allowed envelope; `DeviceService` owns one asynchronous QProcess and a generation counter. A refresh verifies the CLI version before inventory. Selection obtains info, assessment and metadata-only capability replies; each new plan/simulation request re-observes the target. Failed, canceled and superseded observations cannot populate the current view.
+
+QML supplies only current inventory indices and fixed service actions. It cannot set executable paths, pass arbitrary command strings or request probing. The app owns the service until its child stops on shutdown. QML objects are engine-owned; UI models are copied QVariant values with exact numeric text. CMake enables C++ and Qt only when desktop is explicitly requested. There is no desktop install rule in the CLI CPack graph. See [desktop architecture](GUI_ARCHITECTURE_0.4.0.md) and the independent [future threat design](THREAT_MODEL_0.4.0.md).

@@ -1,6 +1,6 @@
 # Continuous integration
 
-The workflow runs on push and pull_request. Default permissions are `contents: read`, checkout credentials are not persisted, and no secrets, workflow_dispatch, pull_request_target, or publication steps are used. Dependencies are installed only on disposable GitHub runners; the tests themselves never require elevation.
+The standalone CLI workflow runs on push and pull_request. Permissions are `contents: read`, checkout credentials are not persisted, and no secrets, pull_request_target or publication steps are used. A separate optional desktop workflow runs only on maintainer-requested workflow_dispatch. Dependencies are installed only on disposable GitHub runners; the tests themselves never require elevation.
 
 | Job | Runner | Compiler/mode | Gates |
 |---|---|---|---|
@@ -24,5 +24,11 @@ unavailable-adapter and Linux fixed-request/lifecycle fixtures. All protocol
 requests in these tests are synthetic. Native integration remains metadata-only;
 no workflow selects a physical protocol target or invokes live `--probe`.
 Windows compiles the unavailable adapter, not an unvalidated property provider.
-The v0.2.0 tag run is a baseline; actual 0.3.0 committed-source CI remains a
+The v0.3.0 tag run is a baseline; actual 0.4.0 committed-source CI remains a
 maintainer gate until that source has been pushed and its jobs observed.
+
+## Optional desktop workflow in 0.4.0
+
+`.github/workflows/desktop.yml` keeps Qt installation out of the default CLI jobs. A maintainer may dispatch its Linux Ubuntu 24.04 and macOS 15 jobs after reviewing/pushing the source. They install aqtinstall 3.3.0 and Qt 6.12.0 into the job workspace, build the real app and synthetic executables, run process/JSON/QML fixtures, run native metadata through the UI without probing, and verify CLI-only package contents. Linux also runs Doxygen. No deploy, signing, publication or artifact upload step exists.
+
+This workflow has not been dispatched during local development. Its existence is not hosted GUI validation. Windows Qt is intentionally absent and remains NOT_RUN; standalone MSVC is still a separate required CLI gate. Offscreen tests execute actual QML controls, but do not establish physical display, screen-reader or clean-machine deployment coverage. Qt SDK downloads and runner images remain external supply-chain dependencies; exact versions and results must be captured by each final run.

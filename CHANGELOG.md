@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 - Inspection Planning and Desktop Alpha (unreleased)
+
+- Add a bounded, owned C17 inspection plan with conservative hazard precedence, independent evidence and permanently unimplemented execution/authorization prerequisites.
+- Add `plan` and `simulate` with additive schema-2 envelopes, exact existing device records, ten deterministic modeled steps and explicit false authority/verification. No storage operation or executable plan is produced.
+- Add an optional Qt Quick desktop with real read-only inventory, assessment, capability evidence and simulation views; the default CLI build and archives remain independent of Qt.
+- Validate the pinned QProcess bridge's fixed arguments, output limits, exact integer/type-preserving JSON, stale generations, timeouts and cancellation with synthetic children and the actual QML window.
+- Add policy, CLI, allocation, forbidden-query and desktop boundary tests; record actual platform results and unexecuted release gates in `docs/PROGRESS_0.4.0.md`.
+- Preserve the published 0.3.0 command defaults, explicit `--probe` behavior and native protocol allowlist. Document future authorization architecture without an executor, service endpoint or credential format.
+
+Desktop distribution is source-build alpha only. This entry records development scope, not release publication or cross-platform GUI acceptance. Older candidate entries below retain their historical wording.
+
 ## 0.3.0 - Audited Read-only Capability Discovery (unreleased)
 
 - Add explicit `capabilities <selector> --probe` without changing default metadata-only commands or schema-2 inventory contracts.

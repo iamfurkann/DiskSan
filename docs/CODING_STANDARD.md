@@ -35,6 +35,8 @@ Document public structs, fields, constants, and nontrivial macros. Field comment
 
 ## Python and build files
 
+Desktop C++17 follows the same file, function, class and public-contract rules. Keep Qt headers/types inside `desktop/`; documented constructors describe ownership and shutdown, and property getters describe freshness and copied/shared value lifetimes. QML files have `@file`/`@brief` headers and named JavaScript helpers have immediate `@brief` blocks. Metadata must use plain text, with accessible names and keyboard-reachable controls. Anonymous signal handlers/lambdas are explained by their enclosing documented operation rather than presented as separate public APIs.
+
 Python modules use a Doxygen-style module docstring with `@file` and `@brief`. Every class, function, and method, including tests, has a meaningful docstring beginning with `@brief` (optionally prefixed by `!` for Doxygen).
 
 ```python
@@ -68,7 +70,7 @@ ctest --test-dir build --output-on-failure
 doxygen Doxyfile
 ```
 
-The `documentation` CTest gate verifies the source manifest, ASCII policy, file/function briefs, public header parameters/returns, and Python docstrings. It is a focused checker for this repository's conventional declarations, not a full C parser or a proof that prose is English or correct. Review remains necessary. Generated API HTML is written under `build-api/html` and must not be committed.
+The `documentation` CTest gate verifies the source manifest, ASCII policy, conventional C/C++ function briefs, public header parameters/returns, named QML helper briefs and Python docstrings. It is a focused checker for this repository's conventional declarations, not a full C/C++/QML parser or a proof that prose is English or correct. Anonymous handlers and complex template syntax require review. Doxygen covers C/C++/Python and Markdown; QML is checked by the focused checker and runtime tests, not parsed as C++ by Doxygen. Generated API HTML is written under `build-api/html` and must not be committed.
 
 The syntax follows the official [Doxygen comment-block guide](https://www.doxygen.nl/manual/docblocks.html) and [special commands](https://www.doxygen.nl/manual/commands.html).
 

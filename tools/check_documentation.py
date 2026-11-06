@@ -14,13 +14,23 @@ C_FUNCTION = re.compile(
     re.MULTILINE,
 )
 BRIEF = re.compile(r"@brief\s+[^\s*]")
+CPP_FUNCTION = re.compile(
+    r"^[ \t]*(?P<result>(?:[A-Za-z_]\w*(?:::\w+)*(?:<[^;{}()\n]+>)?\s+|[*&]\s*)+?)"
+    r"(?P<name>[A-Za-z_]\w*(?:::\w+)*)\s*\((?P<args>(?:[^;{}]|\{\})*)\)"
+    r"\s*(?:(?:const|noexcept|override|final)\s*)*(?=[{;])", re.MULTILINE,
+)
+CPP_CONSTRUCTOR = re.compile(
+    r"^(?P<name>[A-Za-z_]\w*::[A-Za-z_]\w*)\s*\((?P<args>[^;{}]*)\)\s*(?=[:{])",
+    re.MULTILINE,
+)
+QML_FUNCTION = re.compile(r"^[ \t]*function\s+(?P<name>[A-Za-z_]\w*)\s*\(", re.MULTILINE)
 
 
 def source_paths(root):
     """! @brief Discover maintained text files without traversing generated or private directories."""
     paths = set(root.glob("*.md"))
     paths.update(root / name for name in (".gitignore", "CMakeLists.txt", "Doxyfile", "LICENSE"))
-    for directory in ("src", "include", "tests", "tools", "cmake", "docs", ".github"):
+    for directory in ("src", "include", "tests", "tools", "cmake", "docs", "desktop", ".github"):
         for path in (root / directory).rglob("*"):
             if path.is_file() and "__pycache__" not in path.parts and path.name != ".DS_Store":
                 paths.add(path)
@@ -89,6 +99,47 @@ def check_python(name, text):
     return errors, len(nodes)
 
 
+def check_desktop(name, text):
+    """! @brief Check conventional desktop C++ declarations and named QML helpers, including public bridge contracts."""
+    errors = []
+    first = re.match(r"\s*/\*\*.*?\*/", text, re.DOTALL)
+    if not first or "@file" not in first.group() or not BRIEF.search(first.group()):
+        errors.append(f"{name}: missing file-level @file/@brief")
+    qml = name.endswith(".qml")
+    matches = list((QML_FUNCTION if qml else CPP_FUNCTION).finditer(text))
+    if not qml:
+        matches.extend(CPP_CONSTRUCTOR.finditer(text))
+    count = 0
+    for match in matches:
+        result = "" if qml or "result" not in match.re.groupindex else match["result"].strip()
+        if result in ("return", "emit", "throw", "new", "delete"):
+            continue
+        if not qml and name.endswith(".cpp") and text[match.end()] == ";" and match.group()[0].isspace():
+            continue  # In-body constructor calls are not declarations; header methods remain checked.
+        count += 1
+        location = f"{name}:{text.count(chr(10), 0, match.start()) + 1}: {match['name']}"
+        block = preceding_brief(text, match.start())
+        if not block:
+            errors.append(f"{location}: missing immediately preceding @brief")
+            continue
+        if not name.startswith("desktop/backend/") or not name.endswith(".h"):
+            continue
+        access = list(re.finditer(r"^\s*(public|private|protected|signals)\s*:", text[:match.start()], re.MULTILINE))
+        if access and access[-1][1] in ("private", "protected"):
+            continue
+        for arg in match["args"].split(","):
+            arg = arg.split("=", 1)[0].strip()
+            if not arg or arg == "void":
+                continue
+            parameter = re.search(r"([A-Za-z_]\w*)$", arg)
+            if not parameter or not re.search(r"@param(?:\[[^]]*\])?\s+" + parameter[1] + r"\b", block):
+                errors.append(f"{location}: missing @param for {arg}")
+        normalized = result.replace("Q_INVOKABLE", "").strip()
+        if normalized not in ("", "void", "explicit") and not re.search(r"@returns?\b|@retval\b", block):
+            errors.append(f"{location}: missing @return contract")
+    return errors, count
+
+
 def main():
     """! @brief Check manifest completeness and documentation, returning nonzero on violations."""
     names = MANIFEST.read_text(encoding="utf-8").splitlines()
@@ -99,7 +150,7 @@ def main():
     if set(names) != set(actual):
         errors.append(f"Manifest missing: {sorted(set(actual) - set(names))}")
         errors.append(f"Manifest stale: {sorted(set(names) - set(actual))}")
-    c_count = python_count = 0
+    c_count = python_count = desktop_count = 0
     for name in actual:
         path = ROOT / name
         if path.is_symlink():
@@ -109,7 +160,11 @@ def main():
         for number, line in enumerate(text.splitlines(), 1):
             if not line.isascii():
                 errors.append(f"{name}:{number}: use ASCII English prose or escaped Unicode test data")
-        if path.suffix in (".c", ".h") or name.endswith(".h.in"):
+        if name.startswith("desktop/") and path.suffix in (".cpp", ".h", ".hpp", ".qml"):
+            found, count = check_desktop(name, text)
+            errors.extend(found)
+            desktop_count += count
+        elif path.suffix in (".c", ".h") or name.endswith(".h.in"):
             found, count = check_c(name, text)
             errors.extend(found)
             c_count += count
@@ -117,7 +172,7 @@ def main():
             found, count = check_python(name, text)
             errors.extend(found)
             python_count += count
-        elif name in ("CMakeLists.txt", "Doxyfile") or path.suffix in (".cmake", ".yml", ".yaml"):
+        elif path.name in ("CMakeLists.txt", "Doxyfile") or path.suffix in (".cmake", ".yml", ".yaml"):
             header = "\n".join(text.splitlines()[:4])
             if "@file" not in header or not BRIEF.search(header):
                 errors.append(f"{name}: missing configuration @file/@brief")
@@ -125,7 +180,8 @@ def main():
         print("\n".join(errors), file=sys.stderr)
         return 1
     print(f"Documentation OK: {len(actual)} files, {c_count} C declarations/definitions, "
-          f"{python_count} Python classes/functions; manifest and ASCII policy passed.")
+          f"{desktop_count} desktop C++/QML declarations, {python_count} Python classes/functions; "
+          "manifest and ASCII policy passed.")
     return 0
 
 
